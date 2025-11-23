@@ -31,7 +31,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Analytics />
-        <ApiWarmer />
+        {/* <ApiWarmer /> */}
         {children}
       </body>
     </html>

@@ -79,7 +79,7 @@ export default async function LocaleLayout({
     <html lang={params.locale}>
       <body className={inter.className}>
         <Analytics />
-        <ApiWarmer />
+        {/* <ApiWarmer /> */}
         <I18nProvider locale={params.locale} messages={messages}>
           {children}
         </I18nProvider>

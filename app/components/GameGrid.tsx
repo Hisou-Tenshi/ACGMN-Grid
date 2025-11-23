@@ -221,9 +221,10 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     }
 
     // 使用代理URL替换直接的外部URL；若已是本地或数据URL则直接使用
+    // 🟢 upstream 7b108c5：改用 wsrv.nl 公共代理，&output=png 保证透明背景兼容，&w=400 限制尺寸节省流量
     const proxyImageUrl = (game.image.startsWith('/api/') || game.image.startsWith('data:'))
       ? game.image
-      : `/api/proxy?url=${encodeURIComponent(game.image)}`;
+      : `https://wsrv.nl/?url=${encodeURIComponent(game.image)}&output=png&w=400&il`;
 
     try {
       // 先更新UI显示，让用户知道正在处理
