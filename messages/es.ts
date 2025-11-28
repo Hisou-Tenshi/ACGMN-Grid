@@ -49,6 +49,7 @@ const es = {
     cancel: 'Cancelar',
     save: 'Guardar', 
     close: 'Cerrar',
+    confirm: 'Confirmar',
   },
   footer: {
     made_with: 'Adaptación Derivativa con Claude',
@@ -75,6 +76,18 @@ const es = {
     upload_image: 'Subir imagen',
     bangumi_tip: 'Bangumi es una base de datos china centrada en anime y videojuegos, con buen soporte para ACGMN+.',
     sgdb_tip: 'SteamGridDB es una base de datos de portadas de videojuegos con amplia colección, pero solo admite búsquedas en inglés.',
+  },
+  crop: {
+    title: 'Recortar imagen',
+    tip: 'Arrastra y amplía para ajustar el área de recorte',
+    zoom: 'Zoom',
+  },
+  error: {
+    file_too_large: 'Archivo de imagen demasiado grande, por favor sube imágenes menores de {size}',
+    image_load_failed_retry: 'Error al cargar la imagen, inténtalo de nuevo',
+    image_load_failed_select_another: 'Error al cargar la imagen, inténtalo de nuevo o selecciona otra imagen',
+    loading: 'Cargando...',
+    processing: 'Procesando...',
   },
 };
 

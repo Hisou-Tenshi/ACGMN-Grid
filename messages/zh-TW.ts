@@ -49,6 +49,7 @@ const zhTW = {
     cancel: '取消',
     save: '儲存',
     close: '關閉',
+    confirm: '確認',
   },
   footer: {
     made_with: '二次創作 with Claude',
@@ -75,6 +76,18 @@ const zhTW = {
     upload_image: '上傳圖片',
     bangumi_tip: 'Bangumi 是專注動畫、遊戲的中文資料庫，對 ACGMN+ 相關支援較好。',
     sgdb_tip: 'SteamGridDB 是遊戲封面資料庫，收錄豐富，但僅支援英文名稱搜尋。',
+  },
+  crop: {
+    title: '裁剪圖片',
+    tip: '拖動和縮放圖片以調整裁剪區域',
+    zoom: '縮放',
+  },
+  error: {
+    file_too_large: '圖片檔案過大，請上傳小於{size}的圖片',
+    image_load_failed_retry: '圖片載入失敗，請重試',
+    image_load_failed_select_another: '圖片載入失敗，請重試或選擇其他圖片',
+    loading: '載入中...',
+    processing: '處理中...',
   },
 };
 

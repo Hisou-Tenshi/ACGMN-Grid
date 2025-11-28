@@ -49,6 +49,7 @@ const fr = {
     cancel: 'Annuler',
     save: 'Sauvegarder', 
     close: 'Fermer',
+    confirm: 'Confirmer',
   },
   footer: {
     made_with: 'Adaptation Dérivée avec Claude',
@@ -75,6 +76,18 @@ const fr = {
     upload_image: 'Télécharger une image',
     bangumi_tip: 'Bangumi est une base de données chinoise spécialisée dans l\'animation et les jeux vidéo, avec un bon support pour ACGMN+.',
     sgdb_tip: 'SteamGridDB est une base de données de couvertures de jeux vidéo avec une vaste collection, mais ne supporte que les recherches en anglais.',
+  },
+  crop: {
+    title: 'Recadrer l\'image',
+    tip: 'Faites glisser et zoomez pour ajuster la zone de recadrage',
+    zoom: 'Zoom',
+  },
+  error: {
+    file_too_large: 'Le fichier image est trop volumineux, veuillez télécharger une image inférieure à {size}',
+    image_load_failed_retry: 'Échec du chargement de l\'image, veuillez réessayer',
+    image_load_failed_select_another: 'Échec du chargement de l\'image, réessayez ou sélectionnez une autre image',
+    loading: 'Chargement...',
+    processing: 'Traitement...',
   },
 };
 

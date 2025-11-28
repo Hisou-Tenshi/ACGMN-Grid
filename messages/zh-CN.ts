@@ -49,6 +49,7 @@ const zhCN = {
     cancel: '取消',
     save: '保存',
     close: '关闭',
+    confirm: '确认',
   },
   footer: {
     made_with: '二次创作 with Claude & Trae',
@@ -75,6 +76,18 @@ const zhCN = {
     upload_image: '上传图片',
     bangumi_tip: 'Bangumi 是专注动画、游戏的中文数据库，对 ACGMN+ 相关支持较好。',
     sgdb_tip: 'SteamGridDB 是游戏封面数据库，收录丰富，但仅支持英文名搜索。',
+  },
+  crop: {
+    title: '裁剪图片',
+    tip: '拖动和缩放图片以调整裁剪区域',
+    zoom: '缩放',
+  },
+  error: {
+    file_too_large: '图片文件过大，请上传小于{size}的图片',
+    image_load_failed_retry: '图片加载失败，请重试',
+    image_load_failed_select_another: '图片加载失败，请重试或选择其他图片',
+    loading: '加载中...',
+    processing: '处理中...',
   },
 };
 

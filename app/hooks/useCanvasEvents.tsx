@@ -15,6 +15,7 @@ interface UseCanvasEventsProps {
   openTitleEditDialog: (cellId: number) => void
   openNameEditDialog: (cellId: number) => void
   openMainTitleEditDialog: () => void
+  onImageDrop?: (cellId: number, file: File) => void // 添加拖拽图片的回调
   forceCanvasRedraw?: () => void // 添加强制Canvas重绘的函数
 }
 
@@ -26,6 +27,7 @@ export function useCanvasEvents({
   openTitleEditDialog,
   openNameEditDialog,
   openMainTitleEditDialog,
+  onImageDrop,
   forceCanvasRedraw,
 }: UseCanvasEventsProps) {
   const [dragOverCellId, setDragOverCellId] = useState<number | null>(null)
@@ -134,6 +136,22 @@ export function useCanvasEvents({
       // 检查是否是图片文件
       if (!file.type.startsWith("image/")) {
         console.error("只能拖拽图片文件");
+        alert("只能拖拽图片文件");
+        return
+      }
+
+      // 如果提供了 onImageDrop 回调，使用它来处理（会打开裁剪对话框）
+      if (onImageDrop) {
+        onImageDrop(cellId, file);
+        return;
+      }
+
+      // 否则使用默认的自动裁剪处理（向后兼容）
+      // 限制图片大小为3MB
+      const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
+      if (file.size > MAX_FILE_SIZE) {
+        console.error("图片文件过大");
+        alert("图片文件过大,请上传小于3MB的图片");
         return
       }
 

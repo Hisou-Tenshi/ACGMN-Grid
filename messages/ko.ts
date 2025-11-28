@@ -49,6 +49,7 @@ const ko = {
     cancel: '취소',
     save: '저장', 
     close: '닫기',
+    confirm: '확인',
   },
   footer: {
     made_with: 'Claude를 통한 파생 어댑테이션',
@@ -75,6 +76,18 @@ const ko = {
     upload_image: '이미지 업로드',
     bangumi_tip: 'Bangumi는 애니메이션과 게임에 특화된 중국어 데이터베이스로, ACGMN+ 관련 지원이 잘 되어 있습니다.',
     sgdb_tip: 'SteamGridDB는 게임 커버 데이터베이스로 콜렉션이 풍부하지만, 영어 이름으로만 검색이 가능합니다.',
+  },
+  crop: {
+    title: '이미지 자르기',
+    tip: '드래그 및 줌으로 자르기 영역 조정',
+    zoom: '줌',
+  },
+  error: {
+    file_too_large: '이미지 파일이 너무 큽니다. {size}보다 작은 이미지를 업로드하세요',
+    image_load_failed_retry: '이미지 로드 실패, 다시 시도하세요',
+    image_load_failed_select_another: '이미지 로드 실패, 다시 시도하거나 다른 이미지를 선택하세요',
+    loading: '로딩 중...',
+    processing: '처리 중...',
   },
 };
 

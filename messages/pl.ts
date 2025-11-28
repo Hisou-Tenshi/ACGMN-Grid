@@ -49,6 +49,7 @@ const pl = {
     cancel: 'Anuluj',
     save: 'Zapisz', 
     close: 'Zamknij',
+    confirm: 'Potwierdź',
   },
   footer: {
     made_with: 'Adaptacja Pochodna z Claude',
@@ -75,6 +76,18 @@ const pl = {
     upload_image: 'Prześlij Obraz',
     bangumi_tip: 'Bangumi to chińska baza danych skupiająca się na anime i grach, z dobrym wsparciem ACGMN+.',
     sgdb_tip: 'SteamGridDB to baza danych okładek gier z obszerną kolekcją, ale obsługuje tylko wyszukiwanie po angielskich nazwach.',
+  },
+  crop: {
+    title: 'Przytnij obraz',
+    tip: 'Przeciągnij i przybliż, aby dostosować obszar przycinania',
+    zoom: 'Powiększenie',
+  },
+  error: {
+    file_too_large: 'Plik obrazu jest za duży, prześlij obrazy mniejsze niż {size}',
+    image_load_failed_retry: 'Nie udało się załadować obrazu, spróbuj ponownie',
+    image_load_failed_select_another: 'Nie udało się załadować obrazu, spróbuj ponownie lub wybierz inny obraz',
+    loading: 'Ładowanie...',
+    processing: 'Przetwarzanie...',
   },
 };
 

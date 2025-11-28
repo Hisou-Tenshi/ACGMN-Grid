@@ -49,6 +49,7 @@ const nl = {
     cancel: 'Annuleren',
     save: 'Opslaan', 
     close: 'Sluiten',
+    confirm: 'Bevestigen',
   },
   footer: {
     made_with: 'Afgeleide Aanpassing met Claude',
@@ -75,6 +76,18 @@ const nl = {
     upload_image: 'Afbeelding Uploaden',
     bangumi_tip: 'Bangumi is een Chinese database gespecialiseerd in anime en games, met goede ACGMN+ ondersteuning.',
     sgdb_tip: 'SteamGridDB is een game cover database met uitgebreide collectie, maar ondersteunt alleen zoeken op Engelse namen.',
+  },
+  crop: {
+    title: 'Afbeelding bijsnijden',
+    tip: 'Sleep en zoom om het bijsnijgebied aan te passen',
+    zoom: 'Zoom',
+  },
+  error: {
+    file_too_large: 'Afbeeldingsbestand te groot, upload afbeeldingen kleiner dan {size}',
+    image_load_failed_retry: 'Laden van afbeelding mislukt, probeer opnieuw',
+    image_load_failed_select_another: 'Laden van afbeelding mislukt, probeer opnieuw of selecteer een andere afbeelding',
+    loading: 'Laden...',
+    processing: 'Verwerken...',
   },
 };
 

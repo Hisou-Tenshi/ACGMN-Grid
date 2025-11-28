@@ -604,12 +604,12 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
               variant="outline" 
               size="sm" 
               onClick={() => onOpenChange(false)}
-              className="flex-1 sm:flex-none"
+              className="hidden sm:inline-flex"
             >
               {t('common.close')}
             </Button>
             {onUploadImage && (
-              <div className="relative sm:hidden">
+              <div className="relative flex-1 sm:flex-none">
                 <input
                   type="file"
                   accept="image/*"
@@ -619,10 +619,11 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                 />
                 <label
                   htmlFor="image-upload"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded bg-blue-500 hover:bg-blue-600 text-white cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-full sm:w-8 h-8 rounded bg-blue-500 hover:bg-blue-600 text-white cursor-pointer transition-colors gap-2"
                   title={String(t('search.upload_image'))}
                 >
                   <Upload className="h-4 w-4" />
+                  <span className="sm:hidden">{t('search.upload_image')}</span>
                 </label>
               </div>
             )}

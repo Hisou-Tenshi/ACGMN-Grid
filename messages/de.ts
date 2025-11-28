@@ -49,6 +49,7 @@ const de = {
     cancel: 'Abbrechen',
     save: 'Speichern',
     close: 'Schließen',
+    confirm: 'Bestätigen',
   },
   footer: {
     made_with: 'Abgeleitete Anpassung mit Claude',
@@ -75,6 +76,18 @@ const de = {
     upload_image: 'Bild hochladen',
     bangumi_tip: 'Bangumi ist eine chinesische Anime- und Spiele-Datenbank mit guter ACGMN+-Unterstützung.',
     sgdb_tip: 'SteamGridDB ist eine Spiele-Cover-Datenbank mit umfangreicher Sammlung, aber nur englischer Suche.',
+  },
+  crop: {
+    title: 'Bild zuschneiden',
+    tip: 'Ziehen und zoomen, um den Zuschnitt anzupassen',
+    zoom: 'Zoom',
+  },
+  error: {
+    file_too_large: 'Bilddatei zu groß, bitte Bilder kleiner als {size} hochladen',
+    image_load_failed_retry: 'Bild konnte nicht geladen werden, bitte erneut versuchen',
+    image_load_failed_select_another: 'Bild konnte nicht geladen werden, erneut versuchen oder anderes Bild wählen',
+    loading: 'Laden...',
+    processing: 'Verarbeitung...',
   },
 };
 

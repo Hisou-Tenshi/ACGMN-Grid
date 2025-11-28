@@ -49,6 +49,7 @@ const ja = {
     cancel: 'キャンセル',
     save: '保存', 
     close: '閉じる',
+    confirm: '確認',
   },
   footer: {
     made_with: 'Claudeによる二次創作',
@@ -75,6 +76,18 @@ const ja = {
     upload_image: '画像をアップロード',
     bangumi_tip: 'Bangumiはアニメ・ゲームに特化した中国語データベースで、ACGMN+関連のサポートが充実しています。',
     sgdb_tip: 'SteamGridDBはゲームカバーのデータベースで収録数が豊富ですが、英語名でのみ検索可能です。',
+  },
+  crop: {
+    title: '画像をトリミング',
+    tip: 'ドラッグまたはズームでトリミング範囲を調整',
+    zoom: 'ズーム',
+  },
+  error: {
+    file_too_large: '画像ファイルが大きすぎます。{size}以下の画像をアップロードしてください',
+    image_load_failed_retry: '画像の読み込みに失敗しました。再試行してください',
+    image_load_failed_select_another: '画像の読み込みに失敗しました。再試行するか別の画像を選択してください',
+    loading: '読み込み中...',
+    processing: '処理中...',
   },
 };
 

@@ -49,6 +49,7 @@ const tr = {
     cancel: 'İptal',
     save: 'Kaydet', 
     close: 'Kapat',
+    confirm: 'Onayla',
   },
   footer: {
     made_with: 'Claude ile Türev Uyarlama',
@@ -75,6 +76,18 @@ const tr = {
     upload_image: 'Görsel Yükle',
     bangumi_tip: 'Bangumi, anime ve oyunlara odaklanan bir Çin veritabanıdır ve ACGMN+ ile iyi entegrasyona sahiptir.',
     sgdb_tip: 'SteamGridDB, zengin koleksiyona sahip bir oyun kapağı veritabanıdır, ancak yalnızca İngilizce aramayı destekler.',
+  },
+  crop: {
+    title: 'Görseli kırp',
+    tip: 'Kırpma alanını ayarlamak için sürükleyin ve yakınlaştırın',
+    zoom: 'Yakınlaştır',
+  },
+  error: {
+    file_too_large: 'Görsel dosyası çok büyük, lütfen {size} boyutundan küçük görseller yükleyin',
+    image_load_failed_retry: 'Görsel yüklenemedi, lütfen tekrar deneyin',
+    image_load_failed_select_another: 'Görsel yüklenemedi, tekrar deneyin veya başka bir görsel seçin',
+    loading: 'Yüklenıyor...',
+    processing: 'İşleniyor...',
   },
 };
 
