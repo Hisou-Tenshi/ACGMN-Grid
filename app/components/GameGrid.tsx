@@ -10,6 +10,7 @@ import { TextEditDialog } from "./TextEditDialog"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { useCanvasRenderer } from "../hooks/useCanvasRenderer"
 import { useCanvasEvents } from "../hooks/useCanvasEvents"
+import { toProxiedBangumiImageUrl } from "../utils/imageProxy"
 
 interface GameGridProps {
   initialCells: GameCell[]
@@ -256,11 +257,15 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
   const handleSelectGame = async (game: GameSearchResult) => {
     if (selectedCellId === null) return;
 
-    // 当搜索结果没有图时，仅导入到下方「游戏名称」
-    const hasImage = typeof game.image === 'string' && game.image.trim().length > 0;
-    if (!hasImage) {
+    const prevCell = cells[selectedCellId];
+    const originalImageUrl = game.image || "";
+    // 🟢 upstream a2323d9：Bangumi 图片走受限代理（lain.bgm.tv / img.bgm.tv 被墙）
+    const imageLoadUrl = toProxiedBangumiImageUrl(originalImageUrl);
+
+    // 当搜索结果没有图（或无法解析出可加载地址）时，仅导入到下方「游戏名称」
+    if (!imageLoadUrl) {
       const updatedCell: GameCell = {
-        ...cells[selectedCellId],
+        ...prevCell,
         name: game.name, // 导入到「游戏名称」区域
         image: undefined,
         imageObj: null,
@@ -272,18 +277,12 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       return;
     }
 
-    // 使用代理URL替换直接的外部URL；若已是本地或数据URL则直接使用
-    // 🟢 upstream 7b108c5：改用 wsrv.nl 公共代理，&output=png 保证透明背景兼容，&w=400 限制尺寸节省流量
-    const proxyImageUrl = (game.image.startsWith('/api/') || game.image.startsWith('data:'))
-      ? game.image
-      : `https://wsrv.nl/?url=${encodeURIComponent(game.image)}&output=png&w=400&il`;
-
     try {
       // 先更新UI显示，让用户知道正在处理
       const tempUpdatedCell: GameCell = {
-        ...cells[selectedCellId],
+        ...prevCell,
         name: game.name,
-        image: proxyImageUrl, // 临时使用代理URL
+        image: originalImageUrl, // 临时用原始地址，渲染层按需代理
         imageObj: null,
       };
       
@@ -293,7 +292,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       setIsSearchDialogOpen(false);
       
       // 获取图片并转换为base64
-      const response = await fetch(proxyImageUrl);
+      const response = await fetch(imageLoadUrl);
       const blob = await response.blob();
       
       // 创建图片对象进行裁切
@@ -353,10 +352,10 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       saveToIndexedDB(finalUpdatedCell);
     } catch (error) {
       console.error("转换图片为base64时出错:", error);
-      // 如果转换失败，使用原始代理URL作为fallback
+      // 如果转换失败，保留原始 URL，渲染层会按需使用 Bangumi 图片代理
       const fallbackCell: GameCell = {
-        ...cells[selectedCellId],
-        image: proxyImageUrl,
+        ...prevCell,
+        image: originalImageUrl,
         name: game.name,
         imageObj: null,
       };

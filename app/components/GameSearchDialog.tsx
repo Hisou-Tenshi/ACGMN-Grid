@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Gamepad2, Loader2, AlertCircle, Search, RefreshCw, Info, Upload } from "lucide-react"
 import { GameSearchResult } from "../types"
 import { useI18n } from "@/lib/i18n/provider"
+import { toProxiedBangumiImageUrl } from "../utils/imageProxy"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Tooltip,
@@ -553,7 +554,9 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
         <div className="max-h-[40vh] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] overflow-y-auto">
           {searchResults.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {searchResults.map((game) => (
+              {searchResults.map((game) => {
+                const imageSrc = toProxiedBangumiImageUrl(game.image);
+                return (
                 <div
                   key={game.id || game.name}
                   onClick={() => onSelectGame(game)}
@@ -561,9 +564,9 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                   title={`${game.name}`}
                 >
                   <div className="relative w-full h-0 pb-[133.33%] rounded overflow-hidden bg-gray-100">
-                    {game.image ? (
+                    {imageSrc ? (
                       <NextImage 
-                        src={(game.image.startsWith('/api/') || game.image.startsWith('data:')) ? game.image : `/api/proxy?url=${encodeURIComponent(game.image)}`}
+                        src={imageSrc}
                         alt={game.name}
                         fill
                         className="object-cover"
@@ -590,7 +593,8 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                     {game.name}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : renderSearchStatus()}
         </div>
