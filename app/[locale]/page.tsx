@@ -69,18 +69,18 @@ export default function Home() {
 
       <div className="text-sm text-gray-500 mt-1 text-center px-4">
         <p className="flex items-center justify-center mb-1">
-          <a className="text-blue-500 mr-1" href="https://shameimaru-ayaya.github.io/">射命丸文々</a> {t('footer.made_with')}
+          <a className="text-blue-500 mr-1" href="https://hisou-tenshi.github.io/">緋想天子</a> {t('footer.made_with')}
         </p>
         <p className="flex items-center justify-center mb-1">
           {t('footer.if_useful_star')}
           <a
-            href="https://github.com/Shameimaru-Ayaya/game-grid/"
+            href="https://github.com/Hisou-Tenshi/ACGMN-Grid/"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2 inline-flex items-center"
           >
             <img
-              src="https://img.shields.io/github/stars/Shameimaru-Ayaya/game-grid?style=social"
+              src="https://img.shields.io/github/stars/Hisou-Tenshi/ACGMN-Grid?style=social"
               alt="GitHub Stars"
               className="align-middle"
             />
@@ -90,13 +90,13 @@ export default function Home() {
         <p className="flex items-center justify-center">{t('footer.official_link')}</p>
         <p className="flex items-center justify-center mt-1">
           <a
-            href="https://hits.sh/github.com/Shameimaru-Ayaya/game-grid/"
+            href="https://hits.sh/github.com/Hisou-Tenshi/ACGMN-Grid/"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2 inline-flex items-center"
           >
             <img
-              src="https://hits.sh/github.com/Shameimaru-Ayaya/game-grid.svg?label=visitors&color=007ec6"
+              src="https://hits.sh/github.com/Hisou-Tenshi/ACGMN-Grid.svg?label=visitors&color=007ec6"
               alt="Visitors Count"
               className="align-middle"
             />
