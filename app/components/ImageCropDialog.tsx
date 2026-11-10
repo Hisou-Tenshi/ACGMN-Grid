@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Cropper from "react-easy-crop"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -87,6 +87,33 @@ export function ImageCropDialog({ isOpen, onOpenChange, imageSrc, onConfirm }: I
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
+  // react-easy-crop 5.x 无 onMediaLoadError，自己预加载检测失败
+  useEffect(() => {
+    if (!displayImageSrc) {
+      setImageLoaded(false)
+      setImageError(false)
+      return
+    }
+
+    let cancelled = false
+    setImageLoaded(false)
+    setImageError(false)
+    const img = new Image()
+    img.onload = () => {
+      if (!cancelled) setImageLoaded(true)
+    }
+    img.onerror = () => {
+      if (!cancelled) setImageError(true)
+    }
+    img.src = displayImageSrc
+
+    return () => {
+      cancelled = true
+      img.onload = null
+      img.onerror = null
+    }
+  }, [displayImageSrc])
+
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }, [])
@@ -121,11 +148,6 @@ export function ImageCropDialog({ isOpen, onOpenChange, imageSrc, onConfirm }: I
     setImageError(false)
   }
 
-  const handleMediaLoadError = () => {
-    setImageLoaded(false)
-    setImageError(true)
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-h-[90vh] sm:max-w-md md:max-w-lg">
@@ -156,7 +178,6 @@ export function ImageCropDialog({ isOpen, onOpenChange, imageSrc, onConfirm }: I
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
                 onMediaLoaded={handleMediaLoaded}
-                onMediaLoadError={handleMediaLoadError}
               />
             )}
           </div>
