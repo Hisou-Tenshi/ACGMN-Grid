@@ -83,7 +83,7 @@ export default function Home() {
 
       {loading ? (
         <div className="w-full max-w-[1200px] px-4" aria-hidden="true">
-          <div className="grid grid-cols-4 gap-2 animate-pulse">
+          <div className="grid grid-cols-6 gap-2 animate-pulse">
             {Array.from({ length: 24 }).map((_, index) => (
               <div key={index} className="aspect-[3/4] rounded bg-gray-200" />
             ))}
@@ -94,8 +94,9 @@ export default function Home() {
       )}
 
       <div className="text-sm text-gray-500 mt-1 text-center px-4">
-        <p className="flex items-center justify-center mb-1">
-          <a className="text-blue-500 mr-1" href="https://hisou-tenshi.github.io/">緋想天子</a> {t('footer.made_with')}
+        <p className="flex flex-col items-center justify-center mb-1 leading-relaxed sm:flex-row sm:gap-1">
+          <a className="text-blue-500 whitespace-nowrap" href="https://hisou-tenshi.github.io/">緋想天子</a>
+          <span className="whitespace-nowrap text-xs sm:text-sm">{t('footer.made_with')}</span>
         </p>
         <p className="flex items-center justify-center mb-1">
           {t('footer.if_useful_star')}

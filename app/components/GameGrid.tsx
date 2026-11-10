@@ -195,8 +195,6 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     }
   };
 
-  const canvasScrollRef = useRef<HTMLDivElement>(null)
-
   const { scale, drawCanvas } = useCanvasRenderer({ 
     canvasRef, 
     cells, 
@@ -225,13 +223,6 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     onImageDrop: handleImageDrop,
     forceCanvasRedraw: drawCanvas,
   });
-
-  // 窄屏时让画布默认居中，避免初始只看到左侧裁切
-  useEffect(() => {
-    const el = canvasScrollRef.current;
-    if (!el) return;
-    el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
-  }, [scale]);
 
   // 更新 useCanvasRenderer 以使用当前的 dragOverCellId
   useEffect(() => {
@@ -582,7 +573,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
 
   return (
     <>
-      <div ref={canvasScrollRef} className="w-full overflow-x-auto">
+      <div className="w-full">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}

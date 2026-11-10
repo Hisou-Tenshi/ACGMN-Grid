@@ -361,13 +361,15 @@ export function useCanvasRenderer({
     const updateScale = () => {
       if (!canvasRef.current) return;
 
-      const containerWidth = Math.min(window.innerWidth, 1200);
-      // 最小显示宽度：小屏保底 760px 可读，超出视口时由外层容器横向滚动
-      const MIN_DISPLAY_WIDTH = 760;
-      const newScale = Math.max(
-        containerWidth / CANVAS_CONFIG.width,
-        MIN_DISPLAY_WIDTH / CANVAS_CONFIG.width
+      // 始终按容器宽度铺满，保证一屏内完整显示。
+      // 用父容器宽度而不是 window.innerWidth：画布初始 2400px 会把移动端
+      // 布局视口撑大，innerWidth 因此不可靠。
+      const container = canvasRef.current.parentElement;
+      const containerWidth = Math.min(
+        container?.clientWidth || window.innerWidth,
+        1200
       );
+      const newScale = containerWidth / CANVAS_CONFIG.width;
       setScale(newScale);
 
       // 更新Canvas尺寸
@@ -399,8 +401,14 @@ export function useCanvasRenderer({
     };
 
     window.addEventListener("resize", handleResize);
+    const container = canvasRef.current.parentElement;
+    const resizeObserver = container ? new ResizeObserver(handleResize) : null;
+    if (container && resizeObserver) {
+      resizeObserver.observe(container);
+    }
     return () => {
       window.removeEventListener("resize", handleResize);
+      resizeObserver?.disconnect();
       clearTimeout(resizeTimeout);
     };
     // drawCanvas 内部依赖均已通过闭包捕获，且每次渲染重建不会改变绘制结果
