@@ -53,7 +53,7 @@ const pl = {
     confirm: 'Potwierdź',
   },
   footer: {
-    made_with: 'Adaptacja Pochodna z Claude',
+    made_with: 'Adaptacja Pochodna with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: 'Jeśli przydatne, proszę o gwiazdkę →',
     powered_by: 'Wspierane przez Bangumi & SteamGridDB',
     official_link: 'Oficjalny link: acgmn-grid.vercel.app',

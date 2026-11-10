@@ -26,11 +26,11 @@ const zhCN = {
   "最小众精品",
   "最爷青回",
   "最期待续作",
-  "最想早点遇见",
+  "最相见恨晚",
 
   "最好评",
   "最差评",
-  "最被高估",
+  "最过誉",
   "最难评",
   "最想吐槽",
   "最佳剧情",
@@ -53,7 +53,7 @@ const zhCN = {
     confirm: '确认',
   },
   footer: {
-    made_with: '二次创作 with Claude & Trae',
+    made_with: '二次创作 with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: '如果觉得对你有用请点 →',
     powered_by: 'Powered by Bangumi & SteamGridDB',
     official_link: '唯一指定链接：acgmn-grid.vercel.app',
