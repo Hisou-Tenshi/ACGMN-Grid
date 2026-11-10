@@ -1,7 +1,7 @@
 const pl = {
   meta: {
     title: 'ACGMN+ Tabela Preferencji Osobistych｜Generator Tabeli Preferencji ACGMN+',
-    description: 'Stwórz swoją własną tabelę preferencji ACGMN+ (tabela preferencji ACGMN+/siatka 3x3) z obsługą wielu języków i konfigurowalnymi polami. Eksportuj obrazy wysokiej jakości jednym kliknięciem.',
+    description: 'Stwórz swoją własną tabelę preferencji ACGMN+ (tabela preferencji ACGMN+/siatka 4×6 z 24 polami) z obsługą wielu języków i konfigurowalnymi polami. Eksportuj obrazy wysokiej jakości jednym kliknięciem.',
   },
   global: {
     main_title: 'ACGMN+ Osobista Tabela Preferencji',
@@ -39,6 +39,7 @@ const pl = {
     tip_edit:
       'Wskazówka: Kliknij nagłówki, tytuły pól lub nazwy dzieł, aby edytować; możesz także przeciągać obrazy bezpośrednio do pól. Nazwy dzieł obsługują automatyczne zawijanie wierszy, użyj ＼n dla wymuszonego podziału. Oryginalne Dzieło: Github @ SomiaWhiteRing',
     generate: 'Wygeneruj {title}!',
+    generate_failed: 'Nie udało się wygenerować obrazu, spróbuj ponownie',
   },
   dialog: {
     edit_title: 'Edytuj Tytuł',
@@ -76,6 +77,22 @@ const pl = {
     upload_image: 'Prześlij Obraz',
     bangumi_tip: 'Bangumi to chińska baza danych skupiająca się na anime i grach, z dobrym wsparciem ACGMN+.',
     sgdb_tip: 'SteamGridDB to baza danych okładek gier z obszerną kolekcją, ale obsługuje tylko wyszukiwanie po angielskich nazwach.',
+    idle_link_hint: 'Wklej link do obrazu, aby rozpocząć pobieranie',
+    searching_status: 'Wyszukiwanie...',
+    slow_hint: 'Wyszukiwanie trwa dłużej, nadal pracujemy...',
+    results_loading: 'Znaleziono {total} wyników, ładowanie okładek...',
+    link_placeholder: 'Wklej URL obrazu',
+    link_help: 'Wklej bezpośredni link do obrazu; pojawi się jak wyniki wyszukiwania',
+    link_download: 'Z linku',
+    link_input_hint: 'Podaj link',
+    only_http: 'Obsługiwane są tylko linki http/https',
+    invalid_link: 'Nieprawidłowy link, sprawdź i spróbuj ponownie',
+    downloading: 'Pobieranie...',
+    download_failed: 'Pobieranie nie powiodło się, sprawdź link lub sieć',
+    not_image: 'Link nie wskazuje obrazu',
+    link_default_name: 'Obraz z linku',
+    failed: 'Wyszukiwanie nie powiodło się',
+    network_failed: 'Wyszukiwanie nie powiodło się, sprawdź sieć i spróbuj ponownie',
   },
   crop: {
     title: 'Przytnij obraz',
@@ -88,6 +105,10 @@ const pl = {
     image_load_failed_select_another: 'Nie udało się załadować obrazu, spróbuj ponownie lub wybierz inny obraz',
     loading: 'Ładowanie...',
     processing: 'Przetwarzanie...',
+    storage_quota: 'Pamięć lokalna jest pełna; obraz nie został zapisany. Usuń kilka okładek i spróbuj ponownie.',
+  },
+  a11y: {
+    grid_label: 'Tabela preferencji ACGMN+, 24 pola. Użyj strzałek, aby się poruszać, a Enter edytuje aktywne pole.',
   },
 };
 

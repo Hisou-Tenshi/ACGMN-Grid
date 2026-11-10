@@ -1,7 +1,7 @@
 const nl = {
   meta: {
     title: 'ACGMN+ Persoonlijke Voorkeuren Tabel｜ACGMN+ Voorkeuren Generator',
-    description: 'Maak je eigen ACGMN+ persoonlijke voorkeuren tabel (ACGMN+ voorkeuren tabel/3x3 rooster) met meertalige ondersteuning en aanpasbare vakjes. Exporteer hoogwaardige afbeeldingen met één klik.',
+    description: 'Maak je eigen ACGMN+ persoonlijke voorkeuren tabel (ACGMN+ voorkeuren tabel/4×6-rooster met 24 vakken) met meertalige ondersteuning en aanpasbare vakjes. Exporteer hoogwaardige afbeeldingen met één klik.',
   },
   global: {
     main_title: 'ACGMN+ Persoonlijke Voorkeuren Tabel',
@@ -39,6 +39,7 @@ const nl = {
     tip_edit:
       'Tip: Klik op koptitels, cel titels of werknamen om te bewerken; je kunt ook afbeeldingen direct in cellen slepen. Werknamen ondersteunen automatische regelafbreking, of gebruik ＼n voor geforceerde afbreking. Origineel Werk: Github @ SomiaWhiteRing',
     generate: '{title} Genereren!',
+    generate_failed: 'Afbeelding genereren mislukt, probeer opnieuw',
   },
   dialog: {
     edit_title: 'Titel Bewerken',
@@ -76,6 +77,22 @@ const nl = {
     upload_image: 'Afbeelding Uploaden',
     bangumi_tip: 'Bangumi is een Chinese database gespecialiseerd in anime en games, met goede ACGMN+ ondersteuning.',
     sgdb_tip: 'SteamGridDB is een game cover database met uitgebreide collectie, maar ondersteunt alleen zoeken op Engelse namen.',
+    idle_link_hint: 'Voer een afbeeldingslink in om te downloaden',
+    searching_status: 'Zoeken...',
+    slow_hint: 'Het zoeken duurt langer, we gaan door...',
+    results_loading: '{total} resultaten gevonden, covers laden...',
+    link_placeholder: 'Plak een afbeeldings-URL',
+    link_help: 'Plak een directe afbeeldingslink; die wordt zoals zoekresultaten getoond',
+    link_download: 'Vanuit link',
+    link_input_hint: 'Voer een link in',
+    only_http: 'Alleen http/https-links worden ondersteund',
+    invalid_link: 'Ongeldige link, controleer en probeer opnieuw',
+    downloading: 'Downloaden...',
+    download_failed: 'Download mislukt, controleer de link of het netwerk',
+    not_image: 'De link wijst niet naar een afbeelding',
+    link_default_name: 'Gelinkte afbeelding',
+    failed: 'Zoeken mislukt',
+    network_failed: 'Zoeken mislukt, controleer je netwerk en probeer opnieuw',
   },
   crop: {
     title: 'Afbeelding bijsnijden',
@@ -88,6 +105,10 @@ const nl = {
     image_load_failed_select_another: 'Laden van afbeelding mislukt, probeer opnieuw of selecteer een andere afbeelding',
     loading: 'Laden...',
     processing: 'Verwerken...',
+    storage_quota: 'Lokale opslag is vol; de afbeelding is niet opgeslagen. Verwijder enkele covers en probeer opnieuw.',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ voorkeurentabel, 24 vakken. Gebruik de pijltjes om te bewegen en Enter om het actieve vak te bewerken.',
   },
 };
 

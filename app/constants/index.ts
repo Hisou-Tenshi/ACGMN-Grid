@@ -37,38 +37,6 @@ export const DB_CONFIG: DBConfig = {
   version: 1
 };
 
-/**
- * 预定义的格子标题
- */
-export const CELL_TITLES = [
-  "第一部",
-  "最喜欢",
-  "最一眼缘",
-  "最想吐槽",
-  "最长陪伴",
-  "最快乐的",
-  
-  "最佳剧情",
-  "最佳画面",
-  "最佳音乐",
-  "最佳配音",
-  "最佳塑造",
-  "最佳结局",
-  
-  "最想安利",
-  "最爱泡面",
-  "最好评",
-  "最差评", 
-  "最被低估",
-  "最被高估", 
-  
-  "最期续作",
-  "最意犹未尽",
-  "我咋会喜欢这个",
-  "总有一天能补完",
-  "爷青回",
-  "它好小众我好爱",
-];
 
 // 添加 Canvas.roundRect polyfill，以兼容旧版浏览器
 interface BorderRadius {
@@ -79,13 +47,36 @@ interface BorderRadius {
 }
 
 if (isBrowser && !CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function (x: number, y: number, width: number, height: number, radius: number | BorderRadius | any) {
+  const toRadius = (value: number | DOMPointInit | undefined): number => {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    return value.x ?? value.y ?? 0;
+  };
+
+  CanvasRenderingContext2D.prototype.roundRect = function (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radii?: number | DOMPointInit | (number | DOMPointInit)[]
+  ) {
     let r: BorderRadius;
-    if (typeof radius === 'number') {
+    if (typeof radii === 'number') {
+      r = { tl: radii, tr: radii, br: radii, bl: radii };
+    } else if (Array.isArray(radii)) {
+      r = {
+        tl: toRadius(radii[0]),
+        tr: toRadius(radii[1]),
+        br: toRadius(radii[2]),
+        bl: toRadius(radii[3]),
+      };
+    } else if (radii) {
+      const radius = toRadius(radii);
       r = { tl: radius, tr: radius, br: radius, bl: radius };
     } else {
-      r = { tl: 0, tr: 0, br: 0, bl: 0, ...radius };
+      r = { tl: 0, tr: 0, br: 0, bl: 0 };
     }
+
     this.beginPath();
     this.moveTo(x + r.tl, y);
     this.lineTo(x + width - r.tr, y);

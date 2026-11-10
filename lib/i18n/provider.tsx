@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- messages 是运行时加载的 JSON 树，按路径动态取值 */
 "use client";
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
 export type I18nContextType = {
   locale: string;
@@ -29,6 +30,10 @@ export function I18nProvider({ locale, messages, children }: { locale: string; m
       },
     };
   }, [locale, messages]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

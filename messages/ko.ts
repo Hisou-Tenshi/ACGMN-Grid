@@ -1,7 +1,7 @@
 const ko = {
   meta: {
     title: 'ACGMN+ 취향표｜ACGMN+ 취향표 생성기',
-    description: '나만의 ACGMN+ 취향표(ACGMN+ 취향표/3x3 그리드)를 만들어보세요. 다국어 지원과 커스텀 칸 설정이 가능하며, 한 번의 클릭으로 고화질 이미지를 내보낼 수 있습니다.',
+    description: '나만의 ACGMN+ 취향표(ACGMN+ 취향표/4×6 24칸 그리드)를 만들어보세요. 다국어 지원과 커스텀 칸 설정이 가능하며, 한 번의 클릭으로 고화질 이미지를 내보낼 수 있습니다.',
   },
   global: {
     main_title: 'ACGMN+ 개인 취향표',
@@ -39,6 +39,7 @@ const ko = {
     tip_edit:
       '팁: 상단 제목, 칸 제목 또는 작품 이름을 클릭하여 편집할 수 있습니다. 이미지를 칸으로 직접 끌어다 놓을 수도 있습니다. 작품 이름은 자동 줄바꿈을 지원하며, ＼n을 입력하여 강제 줄바꿈할 수 있습니다. Original Work: Github @ SomiaWhiteRing',
     generate: '{title} 생성하기!',
+    generate_failed: '이미지 생성에 실패했습니다. 다시 시도하세요',
   },
   dialog: {
     edit_title: '제목 편집',
@@ -76,6 +77,22 @@ const ko = {
     upload_image: '이미지 업로드',
     bangumi_tip: 'Bangumi는 애니메이션과 게임에 특화된 중국어 데이터베이스로, ACGMN+ 관련 지원이 잘 되어 있습니다.',
     sgdb_tip: 'SteamGridDB는 게임 커버 데이터베이스로 콜렉션이 풍부하지만, 영어 이름으로만 검색이 가능합니다.',
+    idle_link_hint: '이미지 링크를 입력하면 다운로드를 시작합니다',
+    searching_status: '검색 중...',
+    slow_hint: '검색이 오래 걸리고 있습니다. 계속 가져오는 중...',
+    results_loading: '{total}개 결과를 찾았습니다. 표지를 불러오는 중...',
+    link_placeholder: '이미지 링크를 입력하세요',
+    link_help: '이미지 직접 링크를 입력하면 검색 결과처럼 표시됩니다',
+    link_download: '링크에서',
+    link_input_hint: '링크를 입력해 주세요',
+    only_http: 'http/https 링크만 지원합니다',
+    invalid_link: '링크가 유효하지 않습니다. 확인 후 다시 시도하세요',
+    downloading: '다운로드 중...',
+    download_failed: '다운로드 실패. 링크나 네트워크를 확인하세요',
+    not_image: '링크가 이미지가 아닙니다',
+    link_default_name: '링크 이미지',
+    failed: '검색 실패',
+    network_failed: '검색에 실패했습니다. 네트워크를 확인 후 다시 시도하세요',
   },
   crop: {
     title: '이미지 자르기',
@@ -88,6 +105,10 @@ const ko = {
     image_load_failed_select_another: '이미지 로드 실패, 다시 시도하거나 다른 이미지를 선택하세요',
     loading: '로딩 중...',
     processing: '처리 중...',
+    storage_quota: '로컬 저장 공간이 부족하여 저장하지 못했습니다. 저장된 표지를 일부 삭제한 뒤 다시 시도하세요.',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ 인생 취향표, 24칸. 방향키로 이동하고 Enter로 현재 칸을 편집하세요.',
   },
 };
 

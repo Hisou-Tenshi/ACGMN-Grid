@@ -1,7 +1,7 @@
 const ja = {
   meta: {
     title: 'ACGMN+個人好み表｜ACGMN+好み表ジェネレーター',
-    description: 'あなたのACGMN+個人好み表（ACGMN+好み表/3x3グリッド）を作成。多言語対応、カスタム可能なセル、ワンクリックで高画質画像をエクスポート。',
+    description: 'あなたのACGMN+個人好み表（ACGMN+好み表/4×6・24マスグリッド）を作成。多言語対応、カスタム可能なセル、ワンクリックで高画質画像をエクスポート。',
   },
   global: {
     main_title: 'ACGMN+個人好み表',
@@ -39,6 +39,7 @@ const ja = {
     tip_edit:
       'ヒント：上部のタイトル、セルタイトル、作品名をクリックして編集可能。画像をセルに直接ドラッグ＆ドロップもできます。作品名は自動改行に対応、＼nで強制改行も可能。Original Work: Github @ SomiaWhiteRing',
     generate: '{title}を生成！',
+    generate_failed: '画像の生成に失敗しました。再試行してください',
   },
   dialog: {
     edit_title: 'タイトルを編集',
@@ -76,6 +77,22 @@ const ja = {
     upload_image: '画像をアップロード',
     bangumi_tip: 'Bangumiはアニメ・ゲームに特化した中国語データベースで、ACGMN+関連のサポートが充実しています。',
     sgdb_tip: 'SteamGridDBはゲームカバーのデータベースで収録数が豊富ですが、英語名でのみ検索可能です。',
+    idle_link_hint: '画像リンクを入力してダウンロード開始',
+    searching_status: '検索中...',
+    slow_hint: '検索に時間がかかっています。結果を取得中...',
+    results_loading: '{total} 件見つかりました。カバーを読み込み中...',
+    link_placeholder: '画像リンクを貼り付け',
+    link_help: '画像の直リンクを入力すると、検索結果と同じように表示されます',
+    link_download: 'リンクから',
+    link_input_hint: 'リンクを入力してください',
+    only_http: 'http/https リンクのみ対応しています',
+    invalid_link: 'リンクが無効です。確認して再試行してください',
+    downloading: 'ダウンロード中...',
+    download_failed: 'ダウンロードに失敗しました。リンクまたはネットワークを確認してください',
+    not_image: 'リンク先は画像ではありません',
+    link_default_name: 'リンク画像',
+    failed: '検索に失敗しました',
+    network_failed: '検索に失敗しました。ネットワークを確認して再試行してください',
   },
   crop: {
     title: '画像をトリミング',
@@ -88,6 +105,10 @@ const ja = {
     image_load_failed_select_another: '画像の読み込みに失敗しました。再試行するか別の画像を選択してください',
     loading: '読み込み中...',
     processing: '処理中...',
+    storage_quota: 'ローカルストレージが不足しているため保存できませんでした。保存済みカバーを削除して再試行してください。',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ 生涯个人好み表、24 マス。矢印キーで移動し、Enter で現在のマスを編集します。',
   },
 };
 

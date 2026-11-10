@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- messages 是运行时加载的 JSON 树，无法静态收窄 */
 import type { Locale } from './locales';
 
 export type Messages = Record<string, any>;

@@ -40,7 +40,7 @@ const TooltipTrigger = React.forwardRef<
   const handleClick = (e: React.MouseEvent) => {
     // 调用原始onClick
     if (props.onClick) {
-      props.onClick(e as any)
+      props.onClick(e as React.MouseEvent<HTMLButtonElement>)
     }
     
     // 切换tooltip状态

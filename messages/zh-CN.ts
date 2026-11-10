@@ -1,7 +1,7 @@
 const zhCN = {
   meta: {
     title: 'ACGMN+生涯个人喜好表｜ACGMN+喜好表生成器',
-    description: '创建你的ACGMN+生涯喜好表（ACGMN+喜好表/九宫格），支持多语言与自定义格子，一键导出高清图片。',
+    description: '创建你的ACGMN+生涯喜好表（ACGMN+喜好表/24格），支持多语言与自定义格子，一键导出高清图片。',
   },
   global: {
     main_title: 'ACGMN+生涯个人喜好表',
@@ -39,6 +39,7 @@ const zhCN = {
     tip_edit:
       'Ciallo～(∠・ω＜ )⌒★\n提示：点击顶部标题、格子标题或作品名称可以编辑；也可直接拖拽图片到格子中，或通过链接直接下载。作品名称支持自动换行，也可输入＼n强制换行一次。\n原作: [Github@SomiaWhiteRing](https://github.com/SomiaWhiteRing)\n借物表：【[游戏生涯九宫格](https://github.com/SomiaWhiteRing/game-grid/)】【[动画生涯九宫格](https://github.com/itorr/anime-grid)】',
     generate: '生成{title}！',
+    generate_failed: '生成图片失败，请重试',
   },
   dialog: {
     edit_title: '编辑标题',
@@ -76,6 +77,22 @@ const zhCN = {
     upload_image: '上传图片',
     bangumi_tip: 'Bangumi 是专注动画、游戏的中文数据库，对 ACGMN+ 相关支持较好。',
     sgdb_tip: 'SteamGridDB 是游戏封面数据库，收录丰富，但仅支持英文名搜索。',
+    idle_link_hint: '输入链接地址开始下载',
+    searching_status: '正在搜索...',
+    slow_hint: '搜索时间较长，正在努力获取结果...',
+    results_loading: '找到 {total} 个结果，正在加载封面……',
+    link_placeholder: '输入图片链接地址',
+    link_help: '输入图片网页链接，下载后与搜索结果一致展示',
+    link_download: '从链接下载',
+    link_input_hint: '请输入链接地址',
+    only_http: '仅支持 http/https 链接',
+    invalid_link: '链接无效，请检查后重试',
+    downloading: '正在下载...',
+    download_failed: '下载失败，请检查链接或网络',
+    not_image: '链接内容不是图片',
+    link_default_name: '链接图片',
+    failed: '搜索失败',
+    network_failed: '搜索失败，请检查网络连接后重试',
   },
   crop: {
     title: '裁剪图片',
@@ -88,6 +105,10 @@ const zhCN = {
     image_load_failed_select_another: '图片加载失败，请重试或选择其他图片',
     loading: '加载中...',
     processing: '处理中...',
+    storage_quota: '本地存储空间不足，图片未能保存。请删除部分已保存封面后重试。',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ 生涯个人喜好表，24 个格子。使用方向键移动，回车编辑当前格子。',
   },
 };
 

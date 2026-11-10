@@ -1,7 +1,7 @@
 const fr = {
   meta: {
     title: 'Tableau des Préférences Personnelles ACGMN+｜Générateur de Tableaux ACGMN+',
-    description: 'Créez votre tableau des préférences personnelles ACGMN+ (tableau ACGMN+/grille 3x3) avec support multilingue et cellules personnalisables. Exportez des images haute qualité en un clic.',
+    description: 'Créez votre tableau des préférences personnelles ACGMN+ (tableau ACGMN+/grille 4×6 de 24 cases) avec support multilingue et cellules personnalisables. Exportez des images haute qualité en un clic.',
   },
   global: {
     main_title: 'Tableau des Préférences Personnelles ACGMN+',
@@ -39,6 +39,7 @@ const fr = {
     tip_edit:
       'Astuce : Cliquez sur les en-têtes, titres des cellules ou noms des œuvres pour modifier ; vous pouvez aussi glisser-déposer des images directement dans les cellules. Les noms des œuvres supportent les retours à la ligne automatiques, ou utilisez ＼n pour un retour manuel. Œuvre Originale : Github @ SomiaWhiteRing',
     generate: 'Générer {title} !',
+    generate_failed: 'Impossible de générer l\'image, veuillez réessayer',
   },
   dialog: {
     edit_title: 'Modifier le Titre',
@@ -76,6 +77,22 @@ const fr = {
     upload_image: 'Télécharger une image',
     bangumi_tip: 'Bangumi est une base de données chinoise spécialisée dans l\'animation et les jeux vidéo, avec un bon support pour ACGMN+.',
     sgdb_tip: 'SteamGridDB est une base de données de couvertures de jeux vidéo avec une vaste collection, mais ne supporte que les recherches en anglais.',
+    idle_link_hint: 'Collez un lien d\'image pour lancer le téléchargement',
+    searching_status: 'Recherche en cours...',
+    slow_hint: 'La recherche prend du temps, nous continuons...',
+    results_loading: '{total} résultats trouvés, chargement des couvertures...',
+    link_placeholder: 'Collez l\'URL d\'une image',
+    link_help: 'Collez un lien direct vers l\'image ; il s\'affichera comme les résultats',
+    link_download: 'Depuis un lien',
+    link_input_hint: 'Veuillez saisir un lien',
+    only_http: 'Seuls les liens http/https sont pris en charge',
+    invalid_link: 'Lien invalide, vérifiez et réessayez',
+    downloading: 'Téléchargement...',
+    download_failed: 'Échec du téléchargement, vérifiez le lien ou le réseau',
+    not_image: 'Le lien ne pointe pas vers une image',
+    link_default_name: 'Image liée',
+    failed: 'Échec de la recherche',
+    network_failed: 'La recherche a échoué, vérifiez votre réseau et réessayez',
   },
   crop: {
     title: 'Recadrer l\'image',
@@ -88,6 +105,10 @@ const fr = {
     image_load_failed_select_another: 'Échec du chargement de l\'image, réessayez ou sélectionnez une autre image',
     loading: 'Chargement...',
     processing: 'Traitement...',
+    storage_quota: 'Stockage local plein ; l\'image n\'a pas été enregistrée. Supprimez des couvertures puis réessayez.',
+  },
+  a11y: {
+    grid_label: 'Tableau de préférences ACGMN+, 24 cases. Utilisez les flèches pour vous déplacer et Entrée pour éditer la case active.',
   },
 };
 

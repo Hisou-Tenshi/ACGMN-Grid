@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { log, error as logError } from "@/lib/logger"
 import NextImage from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -9,7 +10,7 @@ import { Gamepad2, Loader2, AlertCircle, Search, RefreshCw, Info, Upload } from 
 import { GameSearchResult } from "../types"
 import { useI18n } from "@/lib/i18n/provider"
 import { getSearchImageSources } from "../utils/imageProxy"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Tooltip,
   TooltipContent,
@@ -101,13 +102,13 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
         abortControllerRef.current = null;
       }
     }
-  }, [isOpen, searchResults.length]);
+  }, [isOpen, searchResults.length, t]);
 
   // 清空搜索结果和状态
   const handleClearSearch = (newSource?: SearchSource) => {
     // 取消正在进行的搜索请求
     if (abortControllerRef.current) {
-      console.log('清除搜索时取消进行中的搜索请求');
+      log('清除搜索时取消进行中的搜索请求');
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
@@ -120,7 +121,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
     setSearchResults([]);
     setTotalResults(0);
     const currentSource = newSource || searchSource;
-    setSearchStatus({ state: 'idle', message: currentSource === 'link' ? '输入链接地址开始下载' : String(t('search.idle_hint')) });
+    setSearchStatus({ state: 'idle', message: currentSource === 'link' ? String(t('search.idle_link_hint')) : String(t('search.idle_hint')) });
     lastSearchTermRef.current = '';
   };
 
@@ -145,7 +146,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
     
     // 取消之前的搜索请求（如果有）
     if (abortControllerRef.current) {
-      console.log('取消之前的搜索请求');
+      log('取消之前的搜索请求');
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
@@ -163,7 +164,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
       setTotalResults(0);
     }
     
-    setSearchStatus({ state: 'searching', message: '正在搜索...' });
+    setSearchStatus({ state: 'searching', message: String(t('search.searching_status')) });
     
     // 保存当前搜索词以便重试
     lastSearchTermRef.current = term;
@@ -173,7 +174,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
       if (isLoading && currentAbortController === abortControllerRef.current) {
         setSearchStatus({ 
           state: 'searching', 
-          message: '搜索时间较长，正在努力获取结果...' 
+          message: String(t('search.slow_hint'))
         });
       }
     }, 3000);
@@ -191,7 +192,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
 
       // 检查当前操作是否已被更新的请求取代
       if (currentAbortController !== abortControllerRef.current) {
-        console.log('搜索请求已被新请求取代');
+        log('搜索请求已被新请求取代');
         return;
       }
 
@@ -219,7 +220,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
       while (!done) {
         // 添加检查确保当前控制器仍然有效
         if (currentAbortController !== abortControllerRef.current) {
-          console.log('流处理被新请求中断');
+          log('流处理被新请求中断');
           return;
         }
         
@@ -246,12 +247,12 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                     setTotalResults(data.total);
                     setSearchStatus({ 
                       state: 'searching', 
-                      message: `找到 ${data.total} 个结果，正在加载封面……` 
+                      message: String(t('search.results_loading', { total: data.total }))
                     });
                   } else {
                     setSearchStatus({ 
                       state: 'searching', 
-                      message: `正在搜索……` 
+                      message: String(t('search.searching_status'))
                     });
                   }
                   break;
@@ -275,11 +276,14 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                   break;
 
                 case "gameError":
-                  console.error(`游戏 ${data.gameId} 加载失败:`, data.error);
+                  logError(`游戏 ${data.gameId} 加载失败:`, data.error);
                   break;
 
                 case "error":
-                  setSearchStatus({ state: 'error', message: data.message || "搜索失败" });
+                  setSearchStatus({
+                    state: 'error',
+                    message: data.message === 'search_failed' ? String(t('search.failed')) : data.message || String(t('search.failed'))
+                  });
                   break;
 
                 case "end":
@@ -289,13 +293,13 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                   } else {
                     setSearchStatus({ 
                       state: 'no-results', 
-                      message: data.message || "未找到相关游戏" 
+                      message: String(t('search.no_results'))
                     });
                   }
                   break;
               }
             } catch (error) {
-              console.error("解析响应数据失败:", error, line);
+              logError("解析响应数据失败:", error, line);
             }
           }
         }
@@ -306,28 +310,28 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
         if (games.length > 0) {
           setSearchStatus({ state: 'success', message: '' });
         } else {
-          setSearchStatus({ state: 'no-results', message: "未找到相关游戏" });
+          setSearchStatus({ state: 'no-results', message: String(t('search.no_results')) });
         }
       }
 
     } catch (error) {
       // 检查是否是当前有效的搜索请求
       if (currentAbortController !== abortControllerRef.current) {
-        console.log('搜索错误处理被跳过，因为已有新请求');
+        log('搜索错误处理被跳过，因为已有新请求');
         return;
       }
       
       // 如果是用户取消的请求，不显示错误
       if ((error as Error).name === 'AbortError') {
-        console.log('搜索请求被取消');
+        log('搜索请求被取消');
         return;
       }
 
-      console.error("搜索游戏失败:", error);
+      logError("搜索游戏失败:", error);
       
       setSearchStatus({ 
         state: 'error', 
-        message: "搜索失败，请检查网络连接后重试" 
+        message: String(t('search.network_failed'))
       });
     } finally {
       // 只有在当前控制器仍然有效的情况下才清理状态
@@ -361,21 +365,21 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
         return (
           <div className="flex flex-col items-center justify-center py-10 text-gray-500">
             <Search className="h-12 w-12 mb-2 opacity-30" />
-            <p>{searchStatus.message || String(t('search.idle_hint'))}</p>
+            <p role="status" aria-live="polite">{searchStatus.message || String(t('search.idle_hint'))}</p>
           </div>
         );
       case 'searching':
         return (
           <div className="flex flex-col items-center justify-center py-10 text-gray-500">
             <Loader2 className="h-8 w-8 mb-2 animate-spin" />
-            <p>{searchStatus.message}</p>
+            <p role="status" aria-live="polite">{searchStatus.message}</p>
           </div>
         );
       case 'error':
         return (
           <div className="flex flex-col items-center justify-center py-10 text-red-500">
             <AlertCircle className="h-8 w-8 mb-2" />
-            <p>{searchStatus.message}</p>
+            <p role="status" aria-live="polite">{searchStatus.message}</p>
             <Button 
               variant="outline" 
               className="mt-4" 
@@ -391,7 +395,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
         return (
           <div className="flex flex-col items-center justify-center py-10 text-gray-500">
             <Gamepad2 className="h-8 w-8 mb-2 opacity-50" />
-            <p>{searchStatus.message}</p>
+            <p role="status" aria-live="polite">{searchStatus.message}</p>
             <p className="text-sm mt-2">{t('search.try_keywords')}</p>
           </div>
         );
@@ -426,48 +430,48 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
   const downloadImageFromUrl = async () => {
     const url = searchTerm.trim();
     if (!url) {
-      setSearchStatus({ state: 'idle', message: '请输入链接地址' });
+      setSearchStatus({ state: 'idle', message: String(t('search.link_input_hint')) });
       return;
     }
 
     try {
       const parsed = new URL(url);
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        setSearchStatus({ state: 'error', message: '仅支持 http/https 链接' });
+        setSearchStatus({ state: 'error', message: String(t('search.only_http')) });
         return;
       }
     } catch {
-      setSearchStatus({ state: 'error', message: '链接无效，请检查后重试' });
+      setSearchStatus({ state: 'error', message: String(t('search.invalid_link')) });
       return;
     }
 
     setIsLoading(true);
     setSearchResults([]);
     setTotalResults(0);
-    setSearchStatus({ state: 'searching', message: '正在下载...' });
+    setSearchStatus({ state: 'searching', message: String(t('search.downloading')) });
 
-    const proxiedSrc = `/api/proxy?url=${encodeURIComponent(url)}`;
+    const proxiedSrc = `/api/link-image?url=${encodeURIComponent(url)}`;
 
     try {
       const resp = await fetch(proxiedSrc);
-      if (!resp.ok) throw new Error('下载失败');
+      if (!resp.ok) throw new Error('download_failed');
 
       const contentType = resp.headers.get('Content-Type') || '';
       if (!contentType.startsWith('image/')) {
-        setSearchStatus({ state: 'error', message: '链接内容不是图片' });
+        setSearchStatus({ state: 'error', message: String(t('search.not_image')) });
         return;
       }
 
       const parsed = new URL(url);
-      const name = decodeURIComponent(parsed.pathname.split('/').pop() || '链接图片');
+      const name = decodeURIComponent(parsed.pathname.split('/').pop() || '') || String(t('search.link_default_name'));
       const result: GameSearchResult = { id: url, name, image: proxiedSrc };
 
       setSearchResults([result]);
       setTotalResults(1);
       setSearchStatus({ state: 'success', message: '' });
     } catch (e) {
-      console.error('从链接下载失败:', e);
-      setSearchStatus({ state: 'error', message: '下载失败，请检查链接或网络' });
+      logError('从链接下载失败:', e);
+      setSearchStatus({ state: 'error', message: String(t('search.download_failed')) });
     } finally {
       setIsLoading(false);
     }
@@ -522,7 +526,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                   </TooltipProvider>
                 </TabsTrigger>
                 <TabsTrigger value="link" className="flex items-center justify-center gap-1 flex-shrink-0 whitespace-nowrap text-xs md:text-sm px-2 md:px-3">
-                  从链接下载
+                  {t('search.link_download')}
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -534,7 +538,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
                         </span>
                       </TooltipTrigger>
                       <TooltipContent sideOffset={5} align="center">
-                        <p>输入图片网页链接，下载后与搜索结果一致展示</p>
+                        <p>{t('search.link_help')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -548,7 +552,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={searchSource === 'link' ? '输入图片链接地址' : String(t('search.placeholder'))}
+                placeholder={searchSource === 'link' ? String(t('search.link_placeholder')) : String(t('search.placeholder'))}
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
                 className="pr-8"
@@ -556,7 +560,7 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
               {searchTerm && (
                 <button 
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  onClick={handleClearSearch}
+                  onClick={() => handleClearSearch()}
                   aria-label={String(t('search.clear'))}
                 >
                   ✕
@@ -567,12 +571,12 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {searchSource === 'link' ? '正在下载…' : t('search.searching')}
+                  {searchSource === 'link' ? t('search.downloading') : t('search.searching')}
                 </>
               ) : (
                 <>
                   <Search className="mr-2 h-4 w-4" />
-                  {searchSource === 'link' ? '下载' : t('search.search')}
+                  {searchSource === 'link' ? t('search.link_download') : t('search.search')}
                 </>
               )}
             </Button>

@@ -1,7 +1,7 @@
 const tr = {
   meta: {
     title: 'ACGMN+ Kişisel Tercihler Tablosu｜ACGMN+ Tercih Tablosu Oluşturucu',
-    description: 'ACGMN+ kişisel tercihler tablonuzu (ACGMN+ tercih tablosu/3x3 ızgara) oluşturun. Çok dilli destek ve özelleştirilebilir hücrelerle, tek tıkla yüksek kaliteli görseller dışa aktarın.',
+    description: 'ACGMN+ kişisel tercihler tablonuzu (ACGMN+ tercih tablosu/4×6 24 hücreli ızgara) oluşturun. Çok dilli destek ve özelleştirilebilir hücrelerle, tek tıkla yüksek kaliteli görseller dışa aktarın.',
   },
   global: {
     main_title: 'ACGMN+ Kişisel Tercihler Tablosu',
@@ -39,6 +39,7 @@ const tr = {
     tip_edit:
       'İpucu: Üst başlıklara, hücre başlıklarına veya eser adlarına tıklayarak düzenleyebilirsiniz; ayrıca resimleri doğrudan hücrelere sürükleyip bırakabilirsiniz. Eser adları otomatik satır sonunu destekler, zorunlu satır sonu için ＼n kullanın. Orijinal Çalışma: Github @ SomiaWhiteRing',
     generate: '{title} Oluştur!',
+    generate_failed: 'Görsel oluşturulamadı, lütfen tekrar deneyin',
   },
   dialog: {
     edit_title: 'Başlığı Düzenle',
@@ -76,6 +77,22 @@ const tr = {
     upload_image: 'Görsel Yükle',
     bangumi_tip: 'Bangumi, anime ve oyunlara odaklanan bir Çin veritabanıdır ve ACGMN+ ile iyi entegrasyona sahiptir.',
     sgdb_tip: 'SteamGridDB, zengin koleksiyona sahip bir oyun kapağı veritabanıdır, ancak yalnızca İngilizce aramayı destekler.',
+    idle_link_hint: 'İndirmeye başlamak için bir görsel bağlantısı girin',
+    searching_status: 'Aranıyor...',
+    slow_hint: 'Arama uzun sürüyor, sonuçlar getirilmeye devam ediyor...',
+    results_loading: '{total} sonuç bulundu, kapaklar yükleniyor...',
+    link_placeholder: 'Görsel URL\'sini yapıştırın',
+    link_help: 'Doğrudan görsel bağlantısı yapıştırın; arama sonuçları gibi görünecek',
+    link_download: 'Bağlantıdan',
+    link_input_hint: 'Lütfen bir bağlantı girin',
+    only_http: 'Yalnızca http/https bağlantıları desteklenir',
+    invalid_link: 'Geçersiz bağlantı, kontrol edip tekrar deneyin',
+    downloading: 'İndiriliyor...',
+    download_failed: 'İndirme başarısız, bağlantıyı veya ağı kontrol edin',
+    not_image: 'Bağlantı bir görsele işaret etmiyor',
+    link_default_name: 'Bağlantı görseli',
+    failed: 'Arama başarısız',
+    network_failed: 'Arama başarısız, ağınızı kontrol edip tekrar deneyin',
   },
   crop: {
     title: 'Görseli kırp',
@@ -88,6 +105,10 @@ const tr = {
     image_load_failed_select_another: 'Görsel yüklenemedi, tekrar deneyin veya başka bir görsel seçin',
     loading: 'Yüklenıyor...',
     processing: 'İşleniyor...',
+    storage_quota: 'Yerel depolama dolu; görsel kaydedilemedi. Bazı kapakları silip tekrar deneyin.',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ tercih tablosu, 24 hücre. Ok tuşlarıyla gezinin, Enter ile etkin hücreyi düzenleyin.',
   },
 };
 

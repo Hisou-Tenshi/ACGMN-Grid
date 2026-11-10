@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
+import { error as logError } from "@/lib/logger"
 import Cropper from "react-easy-crop"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -127,7 +128,7 @@ export function ImageCropDialog({ isOpen, onOpenChange, imageSrc, onConfirm }: I
       onConfirm(croppedImage)
       onOpenChange(false)
     } catch (error) {
-      console.error('裁剪图片失败:', error)
+      logError('裁剪图片失败:', error)
     } finally {
       setIsProcessing(false)
     }

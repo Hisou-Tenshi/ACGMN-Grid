@@ -1,7 +1,7 @@
 const en = {
   meta: {
     title: 'ACGMN+ Personal Preferences Chart｜ACGMN+ Chart Generator',
-    description: 'Create your ACGMN+ personal preferences chart (ACGMN+ chart/3x3 grid) with multilingual support and customizable cells. Export high-quality images with one click.',
+    description: 'Create your ACGMN+ personal preferences chart (ACGMN+ chart/4×6 grid with 24 cells) with multilingual support and customizable cells. Export high-quality images with one click.',
   },
   global: {
     main_title: 'ACGMN+ Personal Preferences Chart',
@@ -39,6 +39,7 @@ const en = {
     tip_edit:
       'Tip: Click on headers, cell titles, or work names to edit; you can also drag and drop images directly into cells. Work names support auto line breaks, or use ＼n for manual line breaks. Original Work: Github @ SomiaWhiteRing',
     generate: 'Generate {title}!',
+    generate_failed: 'Failed to generate the image, please retry',
   },
   dialog: {
     edit_title: 'Edit Title',
@@ -76,6 +77,22 @@ const en = {
     upload_image: 'Upload image',
     bangumi_tip: 'Bangumi is a Chinese database focused on anime and games with good ACGMN+ support.',
     sgdb_tip: 'SteamGridDB is a game cover database with extensive collection but only supports English name searches.',
+    idle_link_hint: 'Enter an image link to start downloading',
+    searching_status: 'Searching...',
+    slow_hint: 'Search is taking longer than usual, still working...',
+    results_loading: 'Found {total} results, loading covers...',
+    link_placeholder: 'Paste an image URL',
+    link_help: 'Paste a direct image URL; it will be listed like search results',
+    link_download: 'From link',
+    link_input_hint: 'Please enter a link',
+    only_http: 'Only http/https links are supported',
+    invalid_link: 'Invalid link, please check and retry',
+    downloading: 'Downloading...',
+    download_failed: 'Download failed, please check the link or network',
+    not_image: 'The link does not point to an image',
+    link_default_name: 'Linked image',
+    failed: 'Search failed',
+    network_failed: 'Search failed, please check your network and retry',
   },
   crop: {
     title: 'Crop Image',
@@ -88,6 +105,10 @@ const en = {
     image_load_failed_select_another: 'Image failed to load, please retry or select another image',
     loading: 'Loading...',
     processing: 'Processing...',
+    storage_quota: 'Local storage is full; the image could not be saved. Delete some saved covers and retry.',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ preferences chart, 24 cells. Use arrow keys to move and Enter to edit the focused cell.',
   },
 };
 

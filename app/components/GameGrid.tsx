@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { log, error as logError } from "@/lib/logger"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/lib/i18n/provider"
 import { GameCell, GameSearchResult, GlobalConfig } from "../types"
@@ -10,7 +11,49 @@ import { TextEditDialog } from "./TextEditDialog"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { useCanvasRenderer } from "../hooks/useCanvasRenderer"
 import { useCanvasEvents } from "../hooks/useCanvasEvents"
-import { toProxiedBangumiImageUrl } from "../utils/imageProxy"
+import { getSelectImageSources } from "../utils/imageProxy"
+
+/**
+ * 依次尝试候选地址，返回第一张能成功下载并解码的图片。
+ * 官方地址优先，失败后自动回退到代理地址。
+ */
+async function loadFirstAvailableImage(sources: string[]): Promise<Blob | null> {
+  for (const source of sources) {
+    try {
+      const response = await fetch(source, { signal: AbortSignal.timeout(15_000) })
+      if (!response.ok) continue
+      const blob = await response.blob()
+      if (!blob.type.startsWith("image/")) continue
+      await decodeImageBlob(blob)
+      return blob
+    } catch {
+      continue
+    }
+  }
+  return null
+}
+
+function decodeImageBlob(blob: Blob): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(blob)
+    const img = new Image()
+    const timer = setTimeout(() => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("image_decode_timeout"))
+    }, 15_000)
+    img.onload = () => {
+      clearTimeout(timer)
+      URL.revokeObjectURL(objectUrl)
+      resolve()
+    }
+    img.onerror = () => {
+      clearTimeout(timer)
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("image_decode_failed"))
+    }
+    img.src = objectUrl
+  })
+}
 
 interface GameGridProps {
   initialCells: GameCell[]
@@ -21,6 +64,8 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
   // Canvas相关状态
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [cells, setCells] = useState<GameCell[]>(initialCells)
+  // 键盘操作时高亮的格子（Tab 聚焦画布后可用方向键移动）
+  const [keyboardFocusCellId, setKeyboardFocusCellId] = useState<number | null>(null)
   
   // 全局配置状态
   const [globalConfig, setGlobalConfig] = useState<GlobalConfig>({
@@ -67,7 +112,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
 
   // 打开搜索对话框
   const openSearchDialog = (cellId: number) => {
-    console.log("openSearchDialog")
+    log("openSearchDialog")
     setSelectedCellId(cellId);
     setIsSearchDialogOpen(true);
   };
@@ -135,17 +180,29 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
         setIsCropDialogOpen(true);
       }, 100);
     } catch (error) {
-      console.error('读取拖拽图片失败:', error);
+      logError('读取拖拽图片失败:', error);
       alert(t('error.image_load_failed_select_another'));
     }
   };
 
   // 使用自定义hooks处理Canvas渲染
+  // IndexedDB 写入失败提示（配额不足时给出可操作建议）
+  const handleStorageError = (reason: "quota" | "unknown") => {
+    if (reason === "quota") {
+      alert(String(t('error.storage_quota')));
+    } else {
+      logError("保存数据到 IndexedDB 失败");
+    }
+  };
+
+  const canvasScrollRef = useRef<HTMLDivElement>(null)
+
   const { scale, drawCanvas } = useCanvasRenderer({ 
     canvasRef, 
     cells, 
     setCells, 
     dragOverCellId: null,
+    focusCellId: keyboardFocusCellId,
     globalConfig
   });
 
@@ -169,12 +226,19 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     forceCanvasRedraw: drawCanvas,
   });
 
+  // 窄屏时让画布默认居中，避免初始只看到左侧裁切
+  useEffect(() => {
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+  }, [scale]);
+
   // 更新 useCanvasRenderer 以使用当前的 dragOverCellId
   useEffect(() => {
     if (drawCanvas) {
       drawCanvas();
     }
-  }, [currentDragOverCellId, globalConfig, drawCanvas]);
+  }, [currentDragOverCellId, keyboardFocusCellId, globalConfig, drawCanvas]);
 
   // 保存标题更改
   const handleSaveTitle = (newText: string) => {
@@ -207,7 +271,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     };
 
     setCells(cells.map((cell) => (cell.id === selectedCellId ? updatedCell : cell)));
-    saveToIndexedDB(updatedCell);
+    saveToIndexedDB(updatedCell, handleStorageError);
     setIsNameDialogOpen(false);
   };
 
@@ -259,11 +323,11 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
 
     const prevCell = cells[selectedCellId];
     const originalImageUrl = game.image || "";
-    // 🟢 upstream a2323d9：Bangumi 图片走受限代理（lain.bgm.tv / img.bgm.tv 被墙）
-    const imageLoadUrl = toProxiedBangumiImageUrl(originalImageUrl);
+    // 官方地址优先，CORS/网络失败时自动回退到受限代理
+    const imageSources = getSelectImageSources(originalImageUrl);
 
     // 当搜索结果没有图（或无法解析出可加载地址）时，仅导入到下方「游戏名称」
-    if (!imageLoadUrl) {
+    if (imageSources.length === 0) {
       const updatedCell: GameCell = {
         ...prevCell,
         name: game.name, // 导入到「游戏名称」区域
@@ -272,7 +336,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       };
 
       setCells(cells.map((cell) => (cell.id === selectedCellId ? updatedCell : cell)));
-      saveToIndexedDB(updatedCell);
+      saveToIndexedDB(updatedCell, handleStorageError);
       setIsSearchDialogOpen(false);
       return;
     }
@@ -291,17 +355,26 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       // 关闭搜索对话框，不挡着后续的UI操作
       setIsSearchDialogOpen(false);
       
-      // 获取图片并转换为base64
-      const response = await fetch(imageLoadUrl);
-      const blob = await response.blob();
-      
+      // 按候选链下载图片（官方优先，失败回退代理），避免封面失败时永久等待
+      const blob = await loadFirstAvailableImage(imageSources);
+      if (!blob) throw new Error("image_load_failed");
+
       // 创建图片对象进行裁切
       const img = new Image();
-      img.src = URL.createObjectURL(blob);
-      await new Promise((resolve) => {
-        img.onload = resolve;
+      const objectUrl = URL.createObjectURL(blob);
+      img.src = objectUrl;
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("image_load_timeout")), 15_000);
+        img.onload = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error("image_load_failed"));
+        };
       });
-      
+
       // 创建canvas进行裁切
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -336,7 +409,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       const base64Url = canvas.toDataURL('image/jpeg', 0.9);
       
       // 清理资源
-      URL.revokeObjectURL(img.src);
+      URL.revokeObjectURL(objectUrl);
       
       // 使用base64格式的URL更新cell
       const finalUpdatedCell: GameCell = {
@@ -349,19 +422,19 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       setCells(cells.map((cell) => (cell.id === selectedCellId ? finalUpdatedCell : cell)));
       
       // 保存到IndexedDB
-      saveToIndexedDB(finalUpdatedCell);
+      saveToIndexedDB(finalUpdatedCell, handleStorageError);
     } catch (error) {
-      console.error("转换图片为base64时出错:", error);
+      logError("转换图片为base64时出错:", error);
       // 如果转换失败，保留原始 URL，渲染层会按需使用 Bangumi 图片代理
       const fallbackCell: GameCell = {
         ...prevCell,
-        image: originalImageUrl,
+        image: imageSources[0] ?? originalImageUrl,
         name: game.name,
         imageObj: null,
       };
       
       setCells(cells.map((cell) => (cell.id === selectedCellId ? fallbackCell : cell)));
-      saveToIndexedDB(fallbackCell);
+      saveToIndexedDB(fallbackCell, handleStorageError);
     }
   };
 
@@ -409,7 +482,7 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
         setIsCropDialogOpen(true);
       }, 100);
     } catch (error) {
-      console.error('读取上传图片失败:', error);
+      logError('读取上传图片失败:', error);
       alert(t('error.image_load_failed_select_another'));
     }
   };
@@ -429,12 +502,12 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
       };
 
       setCells(cells.map((cell) => (cell.id === selectedCellId ? updatedCell : cell)));
-      saveToIndexedDB(updatedCell);
+      saveToIndexedDB(updatedCell, handleStorageError);
 
       // 清理状态
       setUploadedImageSrc(null);
     } catch (error) {
-      console.error('保存裁剪图片失败:', error);
+      logError('保存裁剪图片失败:', error);
     }
   };
 
@@ -467,28 +540,75 @@ export function GameGrid({ initialCells, onUpdateCells }: GameGridProps) {
     });
   };
 
+  // 键盘可访问性：方向键在格子间移动，Enter 打开搜索对话框
+  const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const total = cells.length;
+    if (total === 0) return;
+
+    const cols = CANVAS_CONFIG.gridCols;
+    const current = keyboardFocusCellId ?? 0;
+    const row = Math.floor(current / cols);
+    const col = current % cols;
+    let next = current;
+
+    switch (event.key) {
+      case "ArrowRight":
+        next = col + 1 < cols ? current + 1 : current;
+        break;
+      case "ArrowLeft":
+        next = col > 0 ? current - 1 : current;
+        break;
+      case "ArrowDown":
+        next = current + cols < total ? current + cols : current;
+        break;
+      case "ArrowUp":
+        next = row > 0 ? current - cols : current;
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        setSelectedCellId(current);
+        setKeyboardFocusCellId(current);
+        setIsSearchDialogOpen(true);
+        return;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    setKeyboardFocusCellId(next);
+    setSelectedCellId(next);
+  };
+
   return (
     <>
+      <div ref={canvasScrollRef} className="w-full overflow-x-auto">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
         onDragOver={handleDragOver}
-        onDragLeave={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="cursor-pointer"
+        role="img"
+        aria-label={String(t('a11y.grid_label'))}
+        tabIndex={0}
+        onKeyDown={handleCanvasKeyDown}
+        onFocus={() => setKeyboardFocusCellId(selectedCellId ?? 0)}
+        onBlur={() => setKeyboardFocusCellId(null)}
+        className="mx-auto block cursor-pointer outline-none"
         style={{
           width: `${CANVAS_CONFIG.width * scale}px`,
           height: `${CANVAS_CONFIG.height * scale}px`,
-          maxWidth: "100%",
         }}
       />
+      </div>
       
       <p className="mt-4 px-4 text-sm text-gray-500 break-words max-w-4xl mx-auto">
         {parseTextWithLinks(t('ui.tip_edit'))}
       </p>
 
       <Button 
-        onClick={() => generateImage(canvasRef)} 
+        onClick={() => generateImage(canvasRef, locale)} 
         className="mt-6 px-8 py-3 text-lg bg-blue-600 hover:bg-blue-700 whitespace-normal text-center"
       >
         {t('ui.generate', { title: globalConfig.mainTitle })}

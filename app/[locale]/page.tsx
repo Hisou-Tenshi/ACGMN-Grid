@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { error as logError } from "@/lib/logger"
 import { useI18n } from '@/lib/i18n/provider';
 import { GameGrid } from '../components/GameGrid';
 import { GameCell } from '../types';
@@ -22,48 +23,73 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadData = async () => {
+      // 每次切换语系都以当前语系的默认标题为基底，避免沿用上一个语系的标题
+      let merged: GameCell[] = (t('cell_titles') as string[]).map((title, index) => ({
+        id: index,
+        title,
+        image: undefined,
+        name: undefined,
+        imageObj: null,
+      }));
+
       try {
         const savedCells = await loadCellsFromDB();
-        setCells((prevCells) => {
-          let newCells = [...prevCells];
-          // 合并 DB 数据但不覆盖标题（title 由语系字典或本地覆盖提供）
-          savedCells.forEach((savedCell) => {
-            const idx = newCells.findIndex((cell) => cell.id === savedCell.id);
-            if (idx !== -1) {
-              const { title: _ignoredTitle, ...rest } = savedCell as any;
-              newCells[idx] = { ...newCells[idx], ...rest } as GameCell;
-            }
-          });
-
-          // 应用该语系下的自定义标题覆盖
-          if (typeof window !== 'undefined') {
-            const key = `gameGridTitles_${locale}`;
-            const json = localStorage.getItem(key);
-            if (json) {
-              try {
-                const map: Record<string, string> = JSON.parse(json);
-                newCells = newCells.map((c) => ({ ...c, title: map[c.id] ?? c.title }));
-              } catch {}
-            }
+        // 合并 DB 数据但不覆盖标题（title 由语系字典或本地覆盖提供）
+        savedCells.forEach((savedCell) => {
+          const idx = merged.findIndex((cell) => cell.id === savedCell.id);
+          if (idx !== -1) {
+            const rest: Partial<GameCell> = { ...savedCell };
+            delete rest.title;
+            merged[idx] = { ...merged[idx], ...rest } as GameCell;
           }
-          return newCells;
         });
+
+        // 应用该语系下的自定义标题覆盖
+        if (typeof window !== 'undefined') {
+          const key = `gameGridTitles_${locale}`;
+          const json = localStorage.getItem(key);
+          if (json) {
+            try {
+              const map: Record<string, string> = JSON.parse(json);
+              merged = merged.map((c) => ({ ...c, title: map[c.id] ?? c.title }));
+            } catch {}
+          }
+        }
       } catch (e) {
-        console.error('加载数据失败:', e);
-      } finally {
+        logError('加载数据失败:', e);
+      }
+
+      if (!cancelled) {
+        setCells(merged);
         setLoading(false);
       }
     };
+
+    setLoading(true);
     loadData();
-  }, [locale]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, t]);
 
   const handleUpdateCells = (newCells: GameCell[]) => setCells(newCells);
 
   return (
     <main className="min-h-screen flex flex-col items-center py-8 relative">
 
-      {!loading && (
+      {loading ? (
+        <div className="w-full max-w-[1200px] px-4" aria-hidden="true">
+          <div className="grid grid-cols-4 gap-2 animate-pulse">
+            {Array.from({ length: 24 }).map((_, index) => (
+              <div key={index} className="aspect-[3/4] rounded bg-gray-200" />
+            ))}
+          </div>
+        </div>
+      ) : (
         <GameGrid initialCells={cells} onUpdateCells={handleUpdateCells} />
       )}
 
@@ -108,7 +134,7 @@ export default function Home() {
       {(() => {
         const base = 'https://acgmn-grid.vercel.app';
         const url = `${base}/${locale}`;
-        const webAppLd: any = {
+        const webAppLd: Record<string, unknown> & { alternateName?: string[] } = {
           '@context': 'https://schema.org',
           '@type': 'WebApplication',
           name:
@@ -142,7 +168,7 @@ export default function Home() {
                   acceptedAnswer: {
                     '@type': 'Answer',
                     text:
-                      '一种用九宫格等布局展示你对不同维度「最爱、最惊艳、最治愈」等的ACGMN+偏好，可导出分享。',
+                      '一种用 4×6 二十四格布局展示你对不同维度「最爱、最惊艳、最治愈」等的ACGMN+偏好，可导出分享。',
                   },
                 },
                 {

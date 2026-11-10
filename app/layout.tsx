@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/react"
-import ApiWarmer from '@/components/ApiWarmer';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import "./globals.css"
 
@@ -25,13 +24,12 @@ export default function RootLayout({
 }>) {
   // Root is kept minimal; middleware redirects to /<locale> paths
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <GoogleAnalytics />
       </head>
       <body className={inter.className}>
         <Analytics />
-        {/* <ApiWarmer /> */}
         {children}
       </body>
     </html>

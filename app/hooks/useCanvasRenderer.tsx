@@ -1,16 +1,18 @@
 "use client"
 
 import { useState, useEffect, RefObject } from "react"
+import { error as logError } from "@/lib/logger"
 import { GameCell, GlobalConfig } from "../types"
 import { CANVAS_CONFIG, isBrowser } from "../constants"
 import { gamepadIconPath } from "../utils/canvas"
-import { toProxiedBangumiImageUrl } from "../utils/imageProxy"
+import { getSelectImageSources } from "../utils/imageProxy"
 
 interface UseCanvasRendererProps {
   canvasRef: RefObject<HTMLCanvasElement>
   cells: GameCell[]
   setCells: React.Dispatch<React.SetStateAction<GameCell[]>>
   dragOverCellId: number | null
+  focusCellId?: number | null
   globalConfig: GlobalConfig
 }
 
@@ -19,6 +21,7 @@ export function useCanvasRenderer({
   cells,
   setCells,
   dragOverCellId,
+  focusCellId = null,
   globalConfig,
 }: UseCanvasRendererProps) {
   const [scale, setScale] = useState(1)
@@ -81,8 +84,8 @@ export function useCanvasRenderer({
         ctx.strokeStyle = "black"
         ctx.lineWidth = CANVAS_CONFIG.cellBorderWidth
 
-        // 如果是拖拽目标，绘制高亮边框
-        if (dragOverCellId === cell.id) {
+        // 拖拽目标或键盘焦点格子高亮
+        if (dragOverCellId === cell.id || focusCellId === cell.id) {
           ctx.strokeStyle = "#3b82f6" // 蓝色高亮
           ctx.lineWidth = CANVAS_CONFIG.cellBorderWidth * 2
         }
@@ -120,7 +123,7 @@ export function useCanvasRenderer({
             // 绘制游戏封面
             ctx.drawImage(cell.imageObj, coverX, coverY, coverWidth, coverHeight);
           } catch (error) {
-            console.error(`绘制图片失败: ${cell.name || index}`, error);
+            logError(`绘制图片失败: ${cell.name || index}`, error);
             // 绘制错误占位图
             drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight);
           }
@@ -347,7 +350,7 @@ export function useCanvasRenderer({
         canvas.height - CANVAS_CONFIG.padding / 2
       )
     } catch (error) {
-      console.error("绘制Canvas时发生错误:", error)
+      logError("绘制Canvas时发生错误:", error)
     }
   }
 
@@ -359,7 +362,12 @@ export function useCanvasRenderer({
       if (!canvasRef.current) return;
 
       const containerWidth = Math.min(window.innerWidth, 1200);
-      const newScale = containerWidth / CANVAS_CONFIG.width;
+      // 最小显示宽度：小屏保底 760px 可读，超出视口时由外层容器横向滚动
+      const MIN_DISPLAY_WIDTH = 760;
+      const newScale = Math.max(
+        containerWidth / CANVAS_CONFIG.width,
+        MIN_DISPLAY_WIDTH / CANVAS_CONFIG.width
+      );
       setScale(newScale);
 
       // 更新Canvas尺寸
@@ -395,6 +403,8 @@ export function useCanvasRenderer({
       window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimeout);
     };
+    // drawCanvas 内部依赖均已通过闭包捕获，且每次渲染重建不会改变绘制结果
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawCanvas]);
 
   // 当cells变化时重新绘制Canvas
@@ -404,7 +414,9 @@ export function useCanvasRenderer({
         drawCanvas();
       });
     }
-  }, [cells, canvasLoaded, dragOverCellId]);
+    // drawCanvas 每次渲染都会重建，加入依赖会导致重绘风暴；cells 等变化已能触发重绘
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cells, canvasLoaded, dragOverCellId, focusCellId]);
 
   // 加载图片
   useEffect(() => {
@@ -413,14 +425,14 @@ export function useCanvasRenderer({
     cells.forEach((cell, index) => {
       if (cell.image && !cell.imageObj) {
         try {
-          const imageSrc = toProxiedBangumiImageUrl(cell.image);
+          const imageSrc = getSelectImageSources(cell.image)[0];
           if (!imageSrc) return;
 
           // 使用全局 window.Image 构造函数而不是直接使用 Image
           const img = new window.Image();
           img.crossOrigin = "anonymous";
           img.onerror = (err) => {
-            console.error(`图片加载失败: ${imageSrc}`, err);
+            logError(`图片加载失败: ${imageSrc}`, err);
           };
           img.onload = () => {
             setCells((prev) => {
@@ -431,7 +443,7 @@ export function useCanvasRenderer({
           };
           img.src = imageSrc;
         } catch (error) {
-          console.error("创建图片对象失败:", error);
+          logError("创建图片对象失败:", error);
         }
       }
     });

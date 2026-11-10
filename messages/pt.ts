@@ -1,7 +1,7 @@
 const pt = {
   meta: {
     title: 'Tabela de Preferências Pessoais ACGMN+｜Gerador de Tabela de Preferências ACGMN+',
-    description: 'Crie sua tabela de preferências pessoais ACGMN+ (tabela ACGMN+/grade 3x3) com suporte multilíngue e células personalizáveis. Exporte imagens de alta qualidade com um clique.',
+    description: 'Crie sua tabela de preferências pessoais ACGMN+ (tabela ACGMN+/grelha 4×6 com 24 células) com suporte multilíngue e células personalizáveis. Exporte imagens de alta qualidade com um clique.',
   },
   global: {
     main_title: 'Tabela de Preferências Pessoais ACGMN+',
@@ -39,6 +39,7 @@ const pt = {
     tip_edit:
       'Dica: Clique nos títulos superiores, títulos das células ou nomes das obras para editar; você também pode arrastar imagens diretamente para as células. Os nomes das obras suportam quebra de linha automática, ou use ＼n para quebra de linha forçada. Trabalho Original: Github @ SomiaWhiteRing',
     generate: 'Gerar {title}!',
+    generate_failed: 'Não foi possível gerar a imagem, tente novamente',
   },
   dialog: {
     edit_title: 'Editar Título',
@@ -76,6 +77,22 @@ const pt = {
     upload_image: 'Enviar imagem',
     bangumi_tip: 'Bangumi é um banco de dados chinês focado em anime e jogos, com bom suporte para ACGMN+.',
     sgdb_tip: 'SteamGridDB é um banco de dados de capas de jogos com coleção extensa, mas suporta apenas pesquisa por nomes em inglês.',
+    idle_link_hint: 'Cole um link de imagem para iniciar o download',
+    searching_status: 'A pesquisar...',
+    slow_hint: 'A pesquisa está a demorar, continuamos...',
+    results_loading: '{total} resultados encontrados, a carregar capas...',
+    link_placeholder: 'Cole o URL de uma imagem',
+    link_help: 'Cole um link direto para a imagem; será mostrado como os resultados',
+    link_download: 'De link',
+    link_input_hint: 'Introduza um link',
+    only_http: 'Apenas links http/https são suportados',
+    invalid_link: 'Link inválido, verifique e tente novamente',
+    downloading: 'A transferir...',
+    download_failed: 'Falha no download, verifique o link ou a rede',
+    not_image: 'O link não aponta para uma imagem',
+    link_default_name: 'Imagem do link',
+    failed: 'Falha na pesquisa',
+    network_failed: 'A pesquisa falhou, verifique a rede e tente novamente',
   },
   crop: {
     title: 'Recortar imagem',
@@ -88,6 +105,10 @@ const pt = {
     image_load_failed_select_another: 'Falha ao carregar imagem, tente novamente ou selecione outra imagem',
     loading: 'Carregando...',
     processing: 'Processando...',
+    storage_quota: 'O armazenamento local está cheio; a imagem não foi guardada. Apague algumas capas e tente novamente.',
+  },
+  a11y: {
+    grid_label: 'Tabela de preferências ACGMN+, 24 células. Use as setas para mover e Enter para editar a célula atual.',
   },
 };
 

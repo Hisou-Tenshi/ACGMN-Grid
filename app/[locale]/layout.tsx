@@ -1,14 +1,9 @@
 import type React from 'react';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/react';
 import { I18nProvider } from '@/lib/i18n/provider';
 import { getMessages } from '@/lib/i18n/getMessages';
 import { locales, type Locale } from '@/lib/i18n/locales';
-import ApiWarmer from '@/components/ApiWarmer';
 import '../globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export async function generateMetadata({ params }: { params: { locale: Locale } }): Promise<Metadata> {
   const { locale } = params;
@@ -29,6 +24,8 @@ export async function generateMetadata({ params }: { params: { locale: Locale } 
         'ACGMN+喜好表',
         'ACGMN+九宫格',
         'ACGMN+喜好九宫格',
+        'ACGMN+24宫格',
+        'ACGMN+二十四格喜好表',
         '喜好表生成器',
       ]
     : undefined;
@@ -76,14 +73,8 @@ export default async function LocaleLayout({
 }) {
   const messages = await getMessages(params.locale);
   return (
-    <html lang={params.locale}>
-      <body className={inter.className}>
-        <Analytics />
-        {/* <ApiWarmer /> */}
-        <I18nProvider locale={params.locale} messages={messages}>
-          {children}
-        </I18nProvider>
-      </body>
-    </html>
+    <I18nProvider locale={params.locale} messages={messages}>
+      {children}
+    </I18nProvider>
   );
 }

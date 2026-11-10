@@ -1,7 +1,7 @@
 const de = {
   meta: {
     title: 'ACGMN+ Lebenslauf-Vorlieben-Tabelle｜ACGMN+ Vorlieben-Generator',
-    description: 'Erstelle deine persönliche ACGMN+ Lebenslauf-Vorlieben-Tabelle (ACGMN+ Vorlieben-Tabelle/3x3-Gitter) mit mehrsprachigen Titeln und benutzerdefinierten Feldern. Exportiere hochauflösende Bilder mit einem Klick.',
+    description: 'Erstelle deine persönliche ACGMN+ Lebenslauf-Vorlieben-Tabelle (ACGMN+ Vorlieben-Tabelle/4×6-Raster mit 24 Feldern) mit mehrsprachigen Titeln und benutzerdefinierten Feldern. Exportiere hochauflösende Bilder mit einem Klick.',
   },
   global: {
     main_title: 'ACGMN+ Persönliche Vorlieben-Tabelle',
@@ -39,6 +39,7 @@ const de = {
     tip_edit:
       'Tipp: Klicke auf Überschriften, Feldtitel oder Namen zum Bearbeiten. Ziehe Bilder per Drag & Drop in die Felder. Namen haben automatischen Zeilenumbruch, verwende \\n für manuellen Umbruch. Original Work: Github @ SomiaWhiteRing',
     generate: '{title} generieren!',
+    generate_failed: 'Bild konnte nicht erzeugt werden, bitte erneut versuchen',
   },
   dialog: {
     edit_title: 'Titel bearbeiten',
@@ -76,6 +77,22 @@ const de = {
     upload_image: 'Bild hochladen',
     bangumi_tip: 'Bangumi ist eine chinesische Anime- und Spiele-Datenbank mit guter ACGMN+-Unterstützung.',
     sgdb_tip: 'SteamGridDB ist eine Spiele-Cover-Datenbank mit umfangreicher Sammlung, aber nur englischer Suche.',
+    idle_link_hint: 'Bildlink eingeben, um den Download zu starten',
+    searching_status: 'Suche läuft...',
+    slow_hint: 'Die Suche dauert länger, Ergebnisse werden weiter geladen...',
+    results_loading: '{total} Ergebnisse gefunden, Cover werden geladen...',
+    link_placeholder: 'Bild-URL einfügen',
+    link_help: 'Direkten Bildlink einfügen; er wird wie Suchergebnisse angezeigt',
+    link_download: 'Aus Link',
+    link_input_hint: 'Bitte einen Link eingeben',
+    only_http: 'Nur http/https-Links werden unterstützt',
+    invalid_link: 'Ungültiger Link, bitte prüfen und erneut versuchen',
+    downloading: 'Wird heruntergeladen...',
+    download_failed: 'Download fehlgeschlagen, Link oder Netzwerk prüfen',
+    not_image: 'Der Link verweist nicht auf ein Bild',
+    link_default_name: 'Verlinktes Bild',
+    failed: 'Suche fehlgeschlagen',
+    network_failed: 'Suche fehlgeschlagen, Netzwerk prüfen und erneut versuchen',
   },
   crop: {
     title: 'Bild zuschneiden',
@@ -88,6 +105,10 @@ const de = {
     image_load_failed_select_another: 'Bild konnte nicht geladen werden, erneut versuchen oder anderes Bild wählen',
     loading: 'Laden...',
     processing: 'Verarbeitung...',
+    storage_quota: 'Lokaler Speicher voll, das Bild konnte nicht gespeichert werden. Bitte gespeicherte Cover löschen und erneut versuchen.',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ Vorlieben-Tabelle, 24 Felder. Mit Pfeiltasten bewegen, Enter bearbeitet das aktuelle Feld.',
   },
 };
 

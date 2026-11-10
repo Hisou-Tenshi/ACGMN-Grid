@@ -1,7 +1,7 @@
 const zhTW = {
   meta: {
     title: 'ACGMN+生涯個人喜好表｜ACGMN+喜好表生成器',
-    description: '建立你的ACGMN+生涯喜好表（ACGMN+喜好表/九宮格），支援多語言與自訂格位，一鍵匯出高畫質圖片。',
+    description: '建立你的ACGMN+生涯喜好表（ACGMN+喜好表/24格），支援多語言與自訂格位，一鍵匯出高畫質圖片。',
   },
   global: {
     main_title: 'ACGMN+生涯個人喜好表',
@@ -39,6 +39,7 @@ const zhTW = {
     tip_edit:
       '提示：點擊頂部標題、格位標題或作品名稱可以編輯；也可直接拖曳圖片到格位中。作品名稱支援自動換行，也可輸入＼n強制換行一次。Original Work: Github @ SomiaWhiteRing',
     generate: '產生{title}！',
+    generate_failed: '產生圖片失敗，請重試',
   },
   dialog: {
     edit_title: '編輯標題',
@@ -76,6 +77,22 @@ const zhTW = {
     upload_image: '上傳圖片',
     bangumi_tip: 'Bangumi 是專注動畫、遊戲的中文資料庫，對 ACGMN+ 相關支援較好。',
     sgdb_tip: 'SteamGridDB 是遊戲封面資料庫，收錄豐富，但僅支援英文名稱搜尋。',
+    idle_link_hint: '輸入連結開始下載',
+    searching_status: '正在搜尋...',
+    slow_hint: '搜尋時間較長，正在努力取得結果...',
+    results_loading: '找到 {total} 個結果，正在載入封面……',
+    link_placeholder: '輸入圖片連結位址',
+    link_help: '輸入圖片網頁連結，下載後與搜尋結果一致顯示',
+    link_download: '從連結下載',
+    link_input_hint: '請輸入連結位址',
+    only_http: '僅支援 http/https 連結',
+    invalid_link: '連結無效，請檢查後重試',
+    downloading: '正在下載...',
+    download_failed: '下載失敗，請檢查連結或網路',
+    not_image: '連結內容不是圖片',
+    link_default_name: '連結圖片',
+    failed: '搜尋失敗',
+    network_failed: '搜尋失敗，請檢查網路連線後重試',
   },
   crop: {
     title: '裁剪圖片',
@@ -88,6 +105,10 @@ const zhTW = {
     image_load_failed_select_another: '圖片載入失敗，請重試或選擇其他圖片',
     loading: '載入中...',
     processing: '處理中...',
+    storage_quota: '本機儲存空間不足，圖片未能儲存。請刪除部分已儲存封面後重試。',
+  },
+  a11y: {
+    grid_label: 'ACGMN+ 生涯個人喜好表，24 個格子。使用方向鍵移動，Enter 編輯目前格子。',
   },
 };
 

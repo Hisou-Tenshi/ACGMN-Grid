@@ -6,6 +6,8 @@ import { CANVAS_CONFIG } from "../constants"
 import { getCellIdFromCoordinates } from "../utils/canvas"
 import { saveToIndexedDB } from "../utils/indexedDB"
 import { getClickArea, cropImageToAspectRatio } from "@/app/utils/canvasHelpers"
+import { log, warn, error as logError } from "@/lib/logger"
+import { useI18n } from "@/lib/i18n/provider"
 
 interface UseCanvasEventsProps {
   cells: GameCell[]
@@ -19,6 +21,61 @@ interface UseCanvasEventsProps {
   forceCanvasRedraw?: () => void // 添加强制Canvas重绘的函数
 }
 
+/** base64 data URL 的实际字节数。 */
+function getBase64Size(dataUrl: string): number {
+  const base64Data = dataUrl.split(",")[1] || dataUrl
+  const padding = (base64Data.match(/=/g) || []).length
+  return (base64Data.length * 3) / 4 - padding
+}
+
+/** 渲染 canvas：先尝试无损 PNG，超过体积上限再逐级降 JPEG 质量。 */
+function renderCanvasToDownload(
+  canvas: HTMLCanvasElement,
+  maxBytes: number
+): { dataUrl: string; extension: string; size: number } {
+  const png = canvas.toDataURL("image/png")
+  const pngSize = getBase64Size(png)
+  if (pngSize <= maxBytes) {
+    return { dataUrl: png, extension: "png", size: pngSize }
+  }
+
+  let last = { dataUrl: png, extension: "png", size: pngSize }
+  for (const quality of [0.95, 0.9, 0.85, 0.8, 0.75]) {
+    const jpeg = canvas.toDataURL("image/jpeg", quality)
+    const size = getBase64Size(jpeg)
+    last = { dataUrl: jpeg, extension: "jpg", size }
+    if (size <= maxBytes) return last
+  }
+  return last
+}
+
+/** 把 data URL 转成 Blob 并触发下载（对 Safari 更稳）。 */
+function downloadDataUrl(dataUrl: string, fileName: string): void {
+  const byteString = atob(dataUrl.split(",")[1])
+  const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0]
+  const buffer = new ArrayBuffer(byteString.length)
+  const bytes = new Uint8Array(buffer)
+  for (let i = 0; i < byteString.length; i++) {
+    bytes[i] = byteString.charCodeAt(i)
+  }
+
+  const blob = new Blob([buffer], { type: mimeString })
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.style.display = "none"
+  link.href = objectUrl
+  link.download = fileName
+
+  document.body.appendChild(link)
+  setTimeout(() => {
+    link.click()
+    setTimeout(() => {
+      document.body.removeChild(link)
+      URL.revokeObjectURL(objectUrl)
+    }, 100)
+  }, 0)
+}
+
 export function useCanvasEvents({
   cells,
   setCells,
@@ -30,6 +87,7 @@ export function useCanvasEvents({
   onImageDrop,
   forceCanvasRedraw,
 }: UseCanvasEventsProps) {
+  const { t } = useI18n()
   const [dragOverCellId, setDragOverCellId] = useState<number | null>(null)
 
   // 处理Canvas点击事件
@@ -53,7 +111,7 @@ export function useCanvasEvents({
     if (cellId !== null) {
       // 检查点击的具体区域
       const clickArea = getClickArea(x, y, cellId, CANVAS_CONFIG);
-      console.log(cellId, clickArea);
+      log(cellId, clickArea);
       
       // 根据点击区域执行不同操作
       if (clickArea === "image") {
@@ -135,7 +193,7 @@ export function useCanvasEvents({
 
       // 检查是否是图片文件
       if (!file.type.startsWith("image/")) {
-        console.error("只能拖拽图片文件");
+        logError("只能拖拽图片文件");
         alert("只能拖拽图片文件");
         return
       }
@@ -150,7 +208,7 @@ export function useCanvasEvents({
       // 限制图片大小为3MB
       const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
       if (file.size > MAX_FILE_SIZE) {
-        console.error("图片文件过大");
+        logError("图片文件过大");
         alert("图片文件过大,请上传小于3MB的图片");
         return
       }
@@ -190,132 +248,57 @@ export function useCanvasEvents({
         })
 
         // 保存到IndexedDB
-        await saveToIndexedDB(updatedCell)
+        await saveToIndexedDB(updatedCell, (reason) => {
+          if (reason === "quota") {
+            alert(String(t("error.storage_quota")))
+          }
+        })
 
-        console.log("图片已添加到格子中");
+        log("图片已添加到格子中");
       } catch (error) {
-        console.error("读取或处理图片失败:", error)
+        logError("读取或处理图片失败:", error)
       }
     }
   }
 
-  // 计算base64数据的文件大小(字节)
-  const getBase64Size = (base64String: string): number => {
-    // 移除data URL前缀
-    const base64Data = base64String.split(',')[1] || base64String;
-    // base64编码后的大小约为原始大小的4/3
-    const padding = (base64Data.match(/=/g) || []).length;
-    return (base64Data.length * 3) / 4 - padding;
-  }
-
-  // 生成图片 - 注意这里改为async函数
-  const generateImage = async (canvasRef: React.RefObject<HTMLCanvasElement>) => {
+  // 生成图片（PNG 优先；超出体积上限再降级 JPEG；文件名读取当前语系配置）
+  const generateImage = async (
+    canvasRef: React.RefObject<HTMLCanvasElement>,
+    locale: string
+  ) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
     try {
-      const maxFileSize = 5 * 1024 * 1024; // 5MB
-      let dataUrl = "";
-      let fileName = "";
-      let fileSize = 0;
+      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
-      // 获取主标题(从localStorage)
-      let baseFileName = "ACGMN+生涯个人喜好表";
+      let baseFileName = String(t("meta.title"))
       try {
-        const savedConfig = localStorage.getItem('gameGridGlobalConfig');
+        const savedConfig = localStorage.getItem(`gameGridGlobalConfig_${locale}`)
         if (savedConfig) {
-          const parsedConfig = JSON.parse(savedConfig);
-          if (parsedConfig.mainTitle) {
-            baseFileName = parsedConfig.mainTitle;
+          const parsedConfig = JSON.parse(savedConfig) as { mainTitle?: string }
+          if (parsedConfig.mainTitle?.trim()) {
+            baseFileName = parsedConfig.mainTitle.trim()
           }
         }
       } catch (error) {
-        console.error("获取主标题失败:", error);
+        warn("获取主标题失败:", error)
       }
 
-      // 尝试不同的质量和格式,确保文件大小在5MB以内
-      // 首先尝试高质量JPEG(质量0.95)
-      dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-      fileSize = getBase64Size(dataUrl);
-      console.log(`尝试JPEG质量0.95: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
+      baseFileName =
+        baseFileName.replace(/[\\/:*?"<>|]/g, "_").slice(0, 80) || "ACGMN+"
 
-      if (fileSize <= maxFileSize) {
-        fileName = `${baseFileName}.jpg`;
-      } else {
-        // 如果太大,尝试质量0.9
-        dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        fileSize = getBase64Size(dataUrl);
-        console.log(`尝试JPEG质量0.9: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
+      const output = renderCanvasToDownload(canvas, MAX_FILE_SIZE)
+      downloadDataUrl(output.dataUrl, `${baseFileName}.${output.extension}`)
 
-        if (fileSize <= maxFileSize) {
-          fileName = `${baseFileName}.jpg`;
-        } else {
-          // 如果还是太大,尝试质量0.85
-          dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-          fileSize = getBase64Size(dataUrl);
-          console.log(`尝试JPEG质量0.85: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
-
-          if (fileSize <= maxFileSize) {
-            fileName = `${baseFileName}.jpg`;
-          } else {
-            // 如果还是太大,尝试质量0.8
-            dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-            fileSize = getBase64Size(dataUrl);
-            console.log(`尝试JPEG质量0.8: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
-
-            if (fileSize <= maxFileSize) {
-              fileName = `${baseFileName}.jpg`;
-            } else {
-              // 最后尝试质量0.75
-              dataUrl = canvas.toDataURL("image/jpeg", 0.75);
-              fileSize = getBase64Size(dataUrl);
-              console.log(`尝试JPEG质量0.75: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
-              fileName = `${baseFileName}.jpg`;
-              
-              if (fileSize > maxFileSize) {
-                console.warn(`警告:图片大小 ${(fileSize / 1024 / 1024).toFixed(2)}MB 超过了5MB限制`);
-              }
-            }
-          }
-        }
-      }
-
-      // 创建下载链接 - 优化Safari兼容性
-      // 将base64转换为Blob对象
-      const byteString = atob(dataUrl.split(',')[1]);
-      const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-      }
-      const blob = new Blob([ab], { type: mimeString });
-      const objectUrl = URL.createObjectURL(blob);
-
-      // 创建隐藏的下载链接
-      const link = document.createElement("a");
-      link.style.display = "none";
-      link.href = objectUrl;
-      link.download = fileName;
-      
-      // 添加到DOM,触发点击,然后清理
-      document.body.appendChild(link);
-      
-      // 使用setTimeout确保DOM更新完成
-      setTimeout(() => {
-        link.click();
-        
-        // 延迟清理,确保下载开始
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(objectUrl);
-        }, 100);
-      }, 0);
-
-      console.log(`图片已生成并下载: ${fileName}, 大小: ${(fileSize / 1024 / 1024).toFixed(2)}MB`);
+      log(
+        `图片已生成并下载: ${baseFileName}.${output.extension}, 大小: ${(
+          output.size / 1024 / 1024
+        ).toFixed(2)}MB`
+      )
     } catch (error) {
-      console.error("生成图片失败:", error)
-      alert("生成图片失败,请重试");
+      logError("生成图片失败:", error)
+      alert(String(t("ui.generate_failed")))
     }
   }
 
