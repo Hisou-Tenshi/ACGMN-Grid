@@ -53,7 +53,8 @@ const nl = {
     confirm: 'Bevestigen',
   },
   footer: {
-    made_with: 'Afgeleide Aanpassing with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: 'Afgeleide Aanpassing',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: 'Als het nuttig was, geef dan een ster →',
     powered_by: 'Mogelijk gemaakt door Bangumi & SteamGridDB',
     official_link: 'Officiële URL: acgmn-grid.vercel.app',

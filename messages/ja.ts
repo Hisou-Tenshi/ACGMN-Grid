@@ -53,7 +53,8 @@ const ja = {
     confirm: '確認',
   },
   footer: {
-    made_with: '二次創作 with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: '二次創作',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: '役に立ったらスターを →',
     powered_by: 'Powered by Bangumi & SteamGridDB',
     official_link: '公式URL：acgmn-grid.vercel.app',

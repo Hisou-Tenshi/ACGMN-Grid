@@ -53,7 +53,8 @@ const ko = {
     confirm: '확인',
   },
   footer: {
-    made_with: '파생 어댑테이션 with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: '파생 어댑테이션',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: '도움이 되셨다면 별점을 →',
     powered_by: 'Powered by Bangumi & SteamGridDB',
     official_link: '공식 링크: acgmn-grid.vercel.app',

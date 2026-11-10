@@ -53,7 +53,8 @@ const tr = {
     confirm: 'Onayla',
   },
   footer: {
-    made_with: 'Türev Uyarlama with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: 'Türev Uyarlama',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: 'Yararlı bulduysanız lütfen yıldız verin →',
     powered_by: 'Bangumi & SteamGridDB tarafından desteklenmektedir',
     official_link: 'Resmi bağlantı: acgmn-grid.vercel.app',

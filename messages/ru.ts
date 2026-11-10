@@ -53,7 +53,8 @@ const ru = {
     confirm: 'Подтвердить',
   },
   footer: {
-    made_with: 'Производная адаптация with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: 'Производная адаптация',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: 'Если полезно, поставьте звезду →',
     powered_by: 'Работает на Bangumi & SteamGridDB',
     official_link: 'Официальная ссылка: acgmn-grid.vercel.app',

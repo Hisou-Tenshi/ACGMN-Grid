@@ -53,7 +53,8 @@ const es = {
     confirm: 'Confirmar',
   },
   footer: {
-    made_with: 'Adaptación Derivativa with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: 'Adaptación Derivativa',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: 'Si te es útil, por favor dale una estrella →',
     powered_by: 'Con tecnología de Bangumi & SteamGridDB',
     official_link: 'Enlace oficial: acgmn-grid.vercel.app',

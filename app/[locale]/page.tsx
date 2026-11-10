@@ -94,10 +94,13 @@ export default function Home() {
       )}
 
       <div className="text-sm text-gray-500 mt-1 text-center px-4">
-        <p className="flex flex-col items-center justify-center mb-1 leading-relaxed sm:flex-row sm:gap-1">
-          <a className="text-blue-500 whitespace-nowrap" href="https://hisou-tenshi.github.io/">緋想天子</a>
-          <span className="whitespace-nowrap text-xs sm:text-sm">{t('footer.made_with')}</span>
-        </p>
+        <div className="mb-1 leading-relaxed">
+          <p className="flex items-center justify-center gap-1">
+            <a className="text-blue-500 whitespace-nowrap" href="https://hisou-tenshi.github.io/">緋想天子</a>
+            <span className="whitespace-nowrap">{t('footer.made_with')}</span>
+          </p>
+          <p className="whitespace-nowrap text-xs sm:text-sm">{t('footer.credit')}</p>
+        </div>
         <p className="flex items-center justify-center mb-1">
           {t('footer.if_useful_star')}
           <a

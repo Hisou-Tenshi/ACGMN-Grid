@@ -53,7 +53,8 @@ const zhCN = {
     confirm: '确认',
   },
   footer: {
-    made_with: '二次创作 with Claude & DeepSeek in Trae & DeepSeek Harness',
+    made_with: '二次创作',
+    credit: 'with Claude & DeepSeek in Trae & DeepSeek Harness',
     if_useful_star: '如果觉得对你有用请点 →',
     powered_by: 'Powered by Bangumi & SteamGridDB',
     official_link: '唯一指定链接：acgmn-grid.vercel.app',
