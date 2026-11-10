@@ -1,29 +1,28 @@
 import { isBrowser, DB_CONFIG } from "../constants";
+import { log, error as logError } from "@/lib/logger"
 import { GameCell } from "../types";
 
-/**
- * 初始化IndexedDB
- */
-export async function initDB() {
-  if (!isBrowser) return null;
+export type PersistErrorReason = "quota" | "unknown";
 
-  // 检查浏览器是否支持 IndexedDB
-  if (!window.indexedDB) {
-    console.error("您的浏览器不支持IndexedDB，无法保存数据");
-    return null;
-  }
+let dbPromise: Promise<IDBDatabase | null> | null = null;
 
-  return new Promise<IDBDatabase | null>((resolve, reject) => {
+function openDB(): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
     try {
       const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
 
       request.onerror = (event) => {
-        console.error("IndexedDB error:", event);
+        logError("IndexedDB error:", event);
         resolve(null);
       };
 
       request.onsuccess = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        // 版本变更（其他标签页升级）时主动关闭，避免阻塞升级
+        db.onversionchange = () => db.close();
+        db.onclose = () => {
+          dbPromise = null;
+        };
         resolve(db);
       };
 
@@ -34,49 +33,84 @@ export async function initDB() {
         }
       };
     } catch (error) {
-      console.error("初始化IndexedDB失败:", error);
+      logError("初始化IndexedDB失败:", error);
       resolve(null);
     }
   });
 }
 
 /**
- * 保存单元格数据到IndexedDB
+ * 初始化IndexedDB（复用同一个连接，不再每次读写都重新 open）。
  */
-export async function saveToIndexedDB(cell: GameCell) {
+export function initDB(): Promise<IDBDatabase | null> {
+  if (!isBrowser) return Promise.resolve(null);
+
+  if (!window.indexedDB) {
+    logError("您的浏览器不支持IndexedDB，无法保存数据");
+    return Promise.resolve(null);
+  }
+
+  if (!dbPromise) {
+    dbPromise = openDB();
+  }
+  return dbPromise;
+}
+
+function classifyError(error: unknown): PersistErrorReason {
+  const name = (error as { name?: string } | null)?.name;
+  return name === "QuotaExceededError" ? "quota" : "unknown";
+}
+
+/**
+ * 保存单元格数据到IndexedDB。
+ * onError 用于把配额不足等失败原因反馈给 UI（可选）。
+ */
+export async function saveToIndexedDB(
+  cell: GameCell,
+  onError?: (reason: PersistErrorReason) => void
+): Promise<void> {
   if (!isBrowser) return;
 
   try {
     const db = await initDB();
-    if (!db) return;
+    if (!db) {
+      onError?.("unknown");
+      return;
+    }
 
     const transaction = db.transaction(DB_CONFIG.storeName, "readwrite");
     const store = transaction.objectStore(DB_CONFIG.storeName);
 
     // 只保存必要的数据，不保存imageObj
-    const { imageObj, ...cellData } = cell;
+    const cellData: Record<string, unknown> = { ...cell };
+    delete cellData.imageObj;
     store.put(cellData);
 
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       transaction.oncomplete = () => {
-        console.log("数据保存成功");
+        log("数据保存成功");
         resolve();
       };
 
-      transaction.onerror = (error) => {
-        console.error("保存数据失败:", error);
-        reject(error);
+      transaction.onerror = (event) => {
+        logError("保存数据失败:", event);
+        reject((event.target as IDBRequest | null)?.error ?? event);
+      };
+
+      transaction.onabort = () => {
+        reject(transaction.error ?? new Error("transaction_aborted"));
       };
     });
   } catch (error) {
-    console.error("保存数据失败:", error);
+    logError("保存数据失败:", error);
+    onError?.(classifyError(error));
   }
 }
 
 /**
  * 从IndexedDB加载所有单元格数据
  */
-export async function loadCellsFromDB() {
+export async function loadCellsFromDB(): Promise<GameCell[]> {
   try {
     const db = await initDB();
     if (!db) return [];
@@ -84,7 +118,7 @@ export async function loadCellsFromDB() {
     const transaction = db.transaction(DB_CONFIG.storeName, "readonly");
     const store = transaction.objectStore(DB_CONFIG.storeName);
 
-    return new Promise<GameCell[]>((resolve, reject) => {
+    return await new Promise<GameCell[]>((resolve, reject) => {
       const request = store.getAll();
 
       request.onsuccess = () => {
@@ -92,12 +126,12 @@ export async function loadCellsFromDB() {
       };
 
       request.onerror = (event) => {
-        console.error("加载数据失败:", event);
+        logError("加载数据失败:", event);
         reject([]);
       };
     });
   } catch (error) {
-    console.error("加载数据失败:", error);
+    logError("加载数据失败:", error);
     return [];
   }
 }

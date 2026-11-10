@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
+import { log, warn, error as logError } from "@/lib/logger";
+import { getCached, setCached } from "@/lib/server/cache";
+import { rateLimit, tooManyRequests } from "@/lib/server/rateLimit";
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-// Bangumi API 基础URL
 const BANGUMI_API_BASE_URL = "https://api.bgm.tv";
-// Bangumi API Access Token
 const BANGUMI_ACCESS_TOKEN = process.env.BANGUMI_ACCESS_TOKEN;
-// Bangumi API User Agent
 const BANGUMI_USER_AGENT = process.env.BANGUMI_USER_AGENT;
+
+const SEARCH_CACHE_TTL = 2 * 60 * 1000;
+const MAX_RESULTS = 10;
 
 // Bangumi条目类型定义
 interface BangumiSubject {
@@ -23,195 +26,233 @@ interface BangumiSubject {
   image?: string;
 }
 
-// 自定义 fetch 函数，包含重试逻辑
+interface BangumiV0Subject {
+  id: number;
+  name: string;
+  name_cn?: string;
+  type?: number;
+  images?: {
+    large?: string;
+    common?: string;
+    medium?: string;
+  };
+}
+
+interface BangumiV0SearchResponse {
+  data?: BangumiV0Subject[];
+}
+
+interface BangumiLegacySearchResponse {
+  list?: BangumiSubject[];
+}
+
+function bangumiHeaders(extra?: Record<string, string>): Record<string, string> {
+  return {
+    "User-Agent": BANGUMI_USER_AGENT || "GameGrid/1.0",
+    Accept: "application/json",
+    ...(BANGUMI_ACCESS_TOKEN ? { Authorization: `Bearer ${BANGUMI_ACCESS_TOKEN}` } : {}),
+    ...extra,
+  };
+}
+
+/** 把外部 AbortSignal 与超时合并成一个信号。 */
+function withTimeout(signal: AbortSignal | undefined, timeoutMs: number): AbortSignal {
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(new DOMException("Timeout", "TimeoutError"));
+  }, timeoutMs);
+
+  const abortFromParent = () => {
+    clearTimeout(timer);
+    controller.abort(signal?.reason);
+  };
+
+  if (signal) {
+    if (signal.aborted) abortFromParent();
+    else signal.addEventListener("abort", abortFromParent, { once: true });
+  }
+
+  controller.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+  return controller.signal;
+}
+
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  retries = 2,
-  timeout = 8000,
-  retryDelay = 1000
-) {
-  // 创建超时控制器，与传入的信号分开处理
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => timeoutController.abort(), timeout);
+  retries = 1,
+  timeout = 8_000
+): Promise<Response> {
+  let lastError: unknown;
 
-  // 处理信号：如果options中有信号，则用已有信号，否则使用timeoutController的信号
-  const signal = options.signal || timeoutController.signal;
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal,
-    });
-
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-
-    // 如果是外部取消导致的错误，直接抛出
-    if ((error as any).name === "AbortError") {
-      throw error;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fetch(url, {
+        ...options,
+        signal: withTimeout(options.signal ?? undefined, timeout),
+      });
+    } catch (err) {
+      lastError = err;
+      if ((err as Error).name === "AbortError") throw err;
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
     }
-
-    if (retries <= 0) throw error;
-
-    console.log(`请求失败，${retries}次重试后再尝试...`, error);
-    // 等待一段时间再重试
-    await new Promise((resolve) => setTimeout(resolve, retryDelay));
-    return fetchWithRetry(url, options, retries - 1, timeout, retryDelay);
   }
+
+  throw lastError;
 }
 
-// 处理单个条目的函数
+function pickImage(data: {
+  images?: { large?: string; common?: string; medium?: string };
+  image?: string;
+}): string | null {
+  return data.images?.large || data.images?.common || data.images?.medium || data.image || null;
+}
+
+/**
+ * 优先官方新版 /v0/search/subjects（一次请求即带封面），
+ * 不可用时再回退旧版 /search/subject。
+ */
+async function searchSubjects(query: string, signal?: AbortSignal): Promise<BangumiSubject[]> {
+  const cacheKey = `bgm:search:${query.toLowerCase()}`;
+  const cached = getCached<BangumiSubject[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const response = await fetchWithRetry(
+      `${BANGUMI_API_BASE_URL}/v0/search/subjects`,
+      {
+        method: "POST",
+        headers: bangumiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          keyword: query,
+          sort: "match",
+          filter: { type: [1, 2, 3, 4, 6] },
+        }),
+        signal,
+      },
+      1,
+      6_000
+    );
+
+    if (response.ok) {
+      const data = (await response.json()) as BangumiV0SearchResponse;
+      const list = Array.isArray(data.data) ? data.data : [];
+      if (list.length > 0) {
+        const results: BangumiSubject[] = list.map((item) => ({
+          id: item.id,
+          name: item.name_cn || item.name,
+          type: item.type,
+          images: item.images,
+        }));
+        setCached(cacheKey, results, SEARCH_CACHE_TTL);
+        return results;
+      }
+      // 官方接口可用但无结果：直接返回空，不再请求旧接口
+      setCached(cacheKey, [], SEARCH_CACHE_TTL);
+      return [];
+    }
+
+    warn(`Bangumi v0 搜索失败，回退旧接口: ${response.status}`);
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err;
+    warn("Bangumi v0 搜索异常，回退旧接口", err);
+  }
+
+  const legacyUrl = `${BANGUMI_API_BASE_URL}/search/subject/${encodeURIComponent(
+    query
+  )}?responseGroup=small`;
+  const legacyResponse = await fetchWithRetry(
+    legacyUrl,
+    { headers: bangumiHeaders(), signal },
+    1,
+    6_000
+  );
+
+  if (!legacyResponse.ok) {
+    throw new Error(`Bangumi API error: ${legacyResponse.status}`);
+  }
+
+  const legacyData = (await legacyResponse.json()) as BangumiLegacySearchResponse;
+  const list = Array.isArray(legacyData.list) ? legacyData.list : [];
+  setCached(cacheKey, list, SEARCH_CACHE_TTL);
+  return list;
+}
+
+/** 旧接口列表无封面时，单独补一次详情（新版 /v0 优先，再回退旧版）。 */
+async function fetchCover(subject: BangumiSubject, signal?: AbortSignal): Promise<string | null> {
+  try {
+    const detailResponse = await fetchWithRetry(
+      `${BANGUMI_API_BASE_URL}/v0/subjects/${subject.id}`,
+      { headers: bangumiHeaders(), signal },
+      0,
+      5_000
+    );
+    if (detailResponse.ok) {
+      const detail = (await detailResponse.json()) as BangumiV0Subject;
+      const image = pickImage(detail);
+      if (image) return image;
+    }
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err;
+    warn("获取 Bangumi 条目详情失败", subject.id, err);
+  }
+
+  try {
+    const legacyResponse = await fetchWithRetry(
+      `${BANGUMI_API_BASE_URL}/subject/${subject.id}`,
+      { headers: bangumiHeaders(), signal },
+      0,
+      5_000
+    );
+    if (legacyResponse.ok) {
+      const legacy = (await legacyResponse.json()) as BangumiV0Subject;
+      return pickImage(legacy);
+    }
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err;
+    warn("获取 Bangumi 旧版条目详情失败", subject.id, err);
+  }
+
+  return null;
+}
+
 async function processSubject(
   subject: BangumiSubject,
   signal: AbortSignal,
-  controller: ReadableStreamDefaultController<Uint8Array>,
-  successCountRef: { value: number }
-) {
+  send: (payload: Record<string, unknown>) => void
+): Promise<boolean> {
   try {
-    // HTML entities workaround
-    subject.name = subject.name.replaceAll("&amp;", "&");
+    const name = subject.name.replaceAll("&amp;", "&");
 
-    console.log(`处理条目: ${subject.id} (${subject.name})`);
+    send({
+      type: "gameStart",
+      game: { id: subject.id, name, image: null, subjectType: subject.type },
+    });
 
-    // 先发送条目的基本信息，不含图片
-    controller.enqueue(
-      new TextEncoder().encode(
-        JSON.stringify({
-          type: "gameStart",
-          game: {
-            id: subject.id,
-            name: subject.name,
-            image: null,
-            subjectType: subject.type,
-          },
-        }) + "\n"
-      )
-    );
-
-    let image = null;
-
-    // 尝试获取条目封面
-    if (subject.images && subject.images.large) {
-      image = subject.images.large;
-    } else if (subject.images && subject.images.common) {
-      image = subject.images.common;
-    } else if (subject.image) {
-      image = subject.image;
-    }
-
-    // 如果没有直接可用的图片，尝试获取详细信息
+    let image = pickImage(subject);
     if (!image) {
-      try {
-        const detailUrl = `${BANGUMI_API_BASE_URL}/v0/subjects/${subject.id}`;
-        const headers = {
-          "User-Agent": BANGUMI_USER_AGENT || "GameGrid/1.0",
-          Accept: "application/json",
-          ...(BANGUMI_ACCESS_TOKEN ? { Authorization: `Bearer ${BANGUMI_ACCESS_TOKEN}` } : {}),
-        }
-        const detailResponse = await fetchWithRetry(
-          detailUrl,
-          {
-            headers,
-            signal,
-          },
-          1,
-          5000
-        );
-
-        if (detailResponse.ok) {
-          const detailData = await detailResponse.json();
-          if (detailData.images && detailData.images.large) {
-            image = detailData.images.large;
-          } else if (detailData.images && detailData.images.common) {
-            image = detailData.images.common;
-          } else if (detailData.image) {
-            image = detailData.image;
-          }
-        }
-
-        // Fallback to legacy endpoint if v0 has no image or fails
-        if (!image) {
-          try {
-            const legacyUrl = `${BANGUMI_API_BASE_URL}/subject/${subject.id}`;
-            const legacyResponse = await fetchWithRetry(
-              legacyUrl,
-              {
-                headers: {
-                  "User-Agent": BANGUMI_USER_AGENT || "GameGrid/1.0",
-                  Accept: "application/json",
-                },
-                signal,
-              },
-              1,
-              5000
-            )
-            if (legacyResponse.ok) {
-              const legacyData = await legacyResponse.json();
-              if (legacyData.images && legacyData.images.large) {
-                image = legacyData.images.large;
-              } else if (legacyData.images && legacyData.images.common) {
-                image = legacyData.images.common;
-              } else if (legacyData.image) {
-                image = legacyData.image;
-              }
-            }
-          } catch (legacyError) {
-            if ((legacyError as any).name === "AbortError") {
-              throw legacyError;
-            }
-            console.log(`获取旧版条目详情失败:`, legacyError)
-          }
-        }
-      } catch (detailError) {
-        // 检查是否是取消请求导致的错误
-        if ((detailError as any).name === "AbortError") {
-          throw detailError; // 重新抛出以终止整个流程
-        }
-        console.log(`获取条目详情失败:`, detailError);
-      }
+      image = await fetchCover(subject, signal);
     }
 
-    // 发送条目完整信息，含图片URL
-    controller.enqueue(
-      new TextEncoder().encode(
-        JSON.stringify({
-          type: "gameComplete",
-          game: {
-            id: subject.id,
-            name: subject.name,
-            image,
-            subjectType: subject.type,
-          },
-        }) + "\n"
-      )
-    );
+    send({
+      type: "gameComplete",
+      game: { id: subject.id, name, image, subjectType: subject.type },
+    });
 
-    if (image) successCountRef.value++;
-  } catch (error) {
-    // 检查是否是取消请求导致的错误
-    if ((error as any).name === "AbortError") {
-      // 对于取消的请求，只记录，不向客户端发送错误
-      console.log(`条目 ${subject.id} 请求被取消`);
-      return;
-    }
-
-    console.error(`处理条目 ${subject.id} 失败:`, error);
-    controller.enqueue(
-      new TextEncoder().encode(
-        JSON.stringify({
-          type: "gameError",
-          gameId: subject.id,
-          error: (error as Error).message,
-        }) + "\n"
-      )
-    );
+    return Boolean(image);
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err;
+    logError("处理 Bangumi 条目失败", subject.id, err);
+    send({ type: "gameError", gameId: subject.id, error: "get_subject_failed" });
+    return false;
   }
 }
 
 export async function GET(request: Request) {
+  const limit = rateLimit(request, "bgm-search", 30, 60_000);
+  if (!limit.ok) return tooManyRequests(limit.retryAfter);
+
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q");
 
@@ -219,158 +260,71 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "搜索词不能为空" }, { status: 400 });
   }
 
-  // 使用 ReadableStream 创建流式响应
+  const encoder = new TextEncoder();
+  const signal = request.signal;
+
   const stream = new ReadableStream({
     async start(controller) {
-      // 发送初始状态
-      controller.enqueue(
-        new TextEncoder().encode(
-          JSON.stringify({
-            type: "init",
-            message: "正在搜索...",
-          }) + "\n"
-        )
-      );
+      let closed = false;
+
+      const send = (payload: Record<string, unknown>) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(payload) + "\n"));
+        } catch {
+          closed = true;
+        }
+      };
 
       try {
-        console.log(`开始在Bangumi搜索: "${query}"`);
+        log(`开始在Bangumi搜索: "${query}"`);
+        const subjects = await searchSubjects(query, signal);
 
-        // 创建一个新的 AbortController 仅用于这次搜索请求
-        const searchAbortController = new AbortController();
-
-        // 搜索所有类型的条目 - 移除type参数或设置为0表示搜索所有类型
-        const searchUrl = `${BANGUMI_API_BASE_URL}/search/subject/${encodeURIComponent(
-          query
-        )}?responseGroup=small`;
-        console.log(`发送搜索请求到: ${searchUrl}`);
-
-        try {
-          const searchResponse = await fetchWithRetry(searchUrl, {
-            headers: {
-              "User-Agent": BANGUMI_USER_AGENT || "GameGrid/1.0",
-              Accept: "application/json",
-              ...(BANGUMI_ACCESS_TOKEN ? { Authorization: `Bearer ${BANGUMI_ACCESS_TOKEN}` } : {}),
-            },
-            signal: searchAbortController.signal,
-          });
-
-          console.log(`搜索响应状态: ${searchResponse.status}`);
-
-          if (!searchResponse.ok) {
-            throw new Error(`Bangumi API 错误: ${searchResponse.status}`);
-          }
-
-          const searchData = await searchResponse.json();
-          console.log(
-            `搜索结果数量: ${searchData.list ? searchData.list.length : 0}`
-          );
-
-          if (!searchData.list || searchData.list.length === 0) {
-            console.log("没有找到搜索结果");
-            controller.enqueue(
-              new TextEncoder().encode(
-                JSON.stringify({
-                  type: "end",
-                  message: "没有找到任何条目",
-                }) + "\n"
-              )
-            );
-            controller.close();
-            return;
-          }
-
-          // 发送初始消息，告知前端总条目数量
-          controller.enqueue(
-            new TextEncoder().encode(
-              JSON.stringify({
-                type: "init",
-                total: Math.min(searchData.list.length, 10),
-              }) + "\n"
-            )
-          );
-
-          // 处理前10个搜索结果
-          const results = searchData.list.slice(0, 10);
-          const successCountRef = { value: 0 };
-
-          // 为详情请求创建单独的 AbortController
-          const detailAbortController = new AbortController();
-
-          // 同时请求多个条目的详情，但限制并发数
-          const batchSize = 2; // 每批处理的条目数
-
-          for (let i = 0; i < results.length; i += batchSize) {
-            const batch = results.slice(i, i + batchSize);
-
-            // 并行处理每个批次中的条目
-            await Promise.all(
-              batch.map((subject: BangumiSubject) =>
-                processSubject(
-                  subject,
-                  detailAbortController.signal,
-                  controller,
-                  successCountRef
-                )
-              )
-            );
-
-            // 添加每批次的延迟，减轻API负担
-            if (i + batchSize < results.length) {
-              await new Promise((resolve) => setTimeout(resolve, 200));
-            }
-          }
-
-          // 根据结果发送不同的结束消息
-          controller.enqueue(
-            new TextEncoder().encode(
-              JSON.stringify({
-                type: "end",
-                message:
-                  successCountRef.value > 0
-                    ? "所有数据已发送完成"
-                    : "未能获取封面，请重试",
-                successCount: successCountRef.value,
-              }) + "\n"
-            )
-          );
-        } catch (searchError) {
-          // 检查是否是取消请求导致的错误
-          if ((searchError as any).name === "AbortError") {
-            console.log("搜索请求被取消");
-            controller.close();
-            return;
-          }
-
-          console.error("搜索失败:", searchError);
-          controller.enqueue(
-            new TextEncoder().encode(
-              JSON.stringify({
-                type: "error",
-                message: `搜索失败: ${(searchError as Error).message}`,
-              }) + "\n"
-            )
-          );
+        if (subjects.length === 0) {
+          send({ type: "end", successCount: 0 });
+          return;
         }
-      } catch (error) {
-        console.error("处理搜索请求失败:", error);
-        controller.enqueue(
-          new TextEncoder().encode(
-            JSON.stringify({
-              type: "error",
-              message: `处理请求失败: ${(error as Error).message}`,
-            }) + "\n"
-          )
-        );
+
+        const results = subjects.slice(0, MAX_RESULTS);
+        send({ type: "init", total: results.length });
+
+        const batchSize = 2;
+        let successCount = 0;
+
+        for (let i = 0; i < results.length; i += batchSize) {
+          const batch = results.slice(i, i + batchSize);
+          const flags = await Promise.all(
+            batch.map((subject) => processSubject(subject, signal, send))
+          );
+          successCount += flags.filter(Boolean).length;
+
+          if (i + batchSize < results.length) {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+          }
+        }
+
+        send({ type: "end", successCount });
+      } catch (err) {
+        if ((err as Error).name === "AbortError") {
+          log("搜索请求被取消");
+          return;
+        }
+        logError("Bangumi 搜索失败", err);
+        send({ type: "error", message: "search_failed" });
       } finally {
-        controller.close();
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          // 流可能已被取消
+        }
       }
     },
   });
 
-  // 返回流式响应
   return new Response(stream, {
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-ndjson; charset=utf-8",
       "Cache-Control": "no-store, max-age=0",
       "X-Content-Type-Options": "nosniff",
     },

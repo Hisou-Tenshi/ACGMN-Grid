@@ -41,13 +41,6 @@ const nextConfig = {
       },
     ],
   },
-  eslint: {
-    ignoreDuringBuilds: true, // 忽略 eslint 检查
-  },
-  typescript: {
-    // 忽略 TypeScript 构建错误
-    ignoreBuildErrors: true,
-  },
 };
 
 module.exports = nextConfig;
