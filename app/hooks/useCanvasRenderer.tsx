@@ -288,7 +288,6 @@ export function useCanvasRenderer({
         const rawName = cell.name ? cell.name.replace(/\\n/g, "\n") : ""
         const hasManualBreak = rawName.indexOf("\n") !== -1
         const nameText = hasManualBreak ? rawName.replace(/\n/g, " ") : rawName
-        const nameGap = config.cellNameMargin * 0.5
 
         const layoutName = (size: number, maxLines: number): string[] => {
           if (!rawName) return []
@@ -307,31 +306,38 @@ export function useCanvasRenderer({
 
         const nameInkFactor = 0.95
         const nameAscentFactor = 0.8
-        const nameLineGapFactor = 0.4
-        const maxBlockHeight = bandHeight * 0.94
+        const nameLineGapFactor = 0.2
+        const nameGapFactor = 0.85
+        // 奖项标题离封面留出固定呼吸位，名字组随后收紧
+        const topGap = bandHeight * 0.12
+        const bottomGap = bandHeight * 0.08
 
         let nameSize = baseNameSize
         if (reservedLines > 0) {
-          const available = maxBlockHeight - titleInkHeight - nameGap
-          const unitsPerLine = nameInkFactor + nameLineGapFactor
+          const budget =
+            bandHeight - topGap - bottomGap - titleInkHeight
           const denominator =
-            reservedLines * unitsPerLine - nameLineGapFactor
-          const required = baseNameSize * denominator
-          if (required > available) {
-            nameSize = Math.max(
-              10,
-              Math.min(baseNameSize, Math.floor(available / denominator))
+            reservedLines * (nameInkFactor + nameLineGapFactor) -
+            nameLineGapFactor +
+            nameGapFactor
+          nameSize = Math.max(
+            10,
+            Math.min(
+              baseNameSize,
+              Math.floor(budget / denominator)
             )
-          }
+          )
         }
         const nameInkHeight = nameSize * nameInkFactor
         const nameAscent = nameSize * nameAscentFactor
         const nameLineGap = nameSize * nameLineGapFactor
+        const nameGap = nameSize * nameGapFactor
 
         // 小格子放不下预留行时逐行退让，绝不让名字压到奖项标题
         let fitLines = reservedLines
         while (fitLines > 0) {
           const needed =
+            topGap +
             titleInkHeight +
             nameGap +
             fitLines * nameInkHeight +
@@ -342,14 +348,10 @@ export function useCanvasRenderer({
         const nameLines =
           fitLines > 0 ? layoutName(nameSize, fitLines) : []
 
-        const blockHeight =
-          titleInkHeight +
-          (fitLines > 0
-            ? nameGap +
-              fitLines * nameInkHeight +
-              (fitLines - 1) * nameLineGap
-            : 0)
-        const blockTop = bandTop + Math.max(0, bandHeight - blockHeight) / 2
+        const blockTop =
+          reservedLines > 0
+            ? bandTop + topGap
+            : bandTop + Math.max(0, bandHeight - titleInkHeight) / 2
 
         ctx.textBaseline = "alphabetic"
         ctx.font = `600 ${titleSize}px ${SERIF_FONT}`
