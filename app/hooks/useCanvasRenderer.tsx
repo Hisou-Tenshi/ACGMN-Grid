@@ -9,7 +9,7 @@ import { getSelectImageSources } from "../utils/imageProxy"
 import { parseMainTitle } from "../utils/gridLayout"
 
 const SERIF_FONT =
-  '"Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", "Times New Roman", serif'
+  '"Charter", "Cambria", "Songti SC", "Songti TC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif'
 const SANS_FONT =
   '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif'
 
@@ -171,6 +171,41 @@ export function useCanvasRenderer({
         )
       }
 
+      // 有任何作品名时，空格子也预留行数，保证奖项标题跨格对齐
+      const hasAnyName = cells.some((cell) => Boolean(cell.name))
+      const gridCellWidth = (width - padding * 2) / config.gridCols
+      const nameMaxWidthGlobal =
+        gridCellWidth - config.cellPadding * 2
+      const baseNameSize = config.cellNameFontSize
+
+      const countNameLines = (name?: string): number => {
+        if (!name) return 0
+        const raw = name.replace(/\\n/g, "\n")
+        if (raw.indexOf("\n") !== -1) {
+          return Math.min(
+            2,
+            raw.split("\n").filter((line) => line.trim().length > 0).length
+          )
+        }
+        const text = raw.replace(/\s+/g, " ").trim()
+        if (!text) return 0
+        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+        return Math.min(
+          2,
+          wrapText(ctx, text, nameMaxWidthGlobal, 2).length
+        )
+      }
+
+      const reservedLines = hasAnyName
+        ? Math.max(
+            1,
+            cells.reduce(
+              (max, cell) => Math.max(max, countNameLines(cell.name)),
+              0
+            )
+          )
+        : 0
+
       // 绘制单元格
       cells.forEach((cell, index) => {
         if (index >= config.gridRows * config.gridCols) return
@@ -228,71 +263,122 @@ export function useCanvasRenderer({
           drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight)
         }
 
-        // 格子标题（衬线体，过长自动缩小）
+        // 奖项标题与作品名作为一组，在封面下方的空间内垂直居中
+        const innerBottom = y + cellHeight - inset - config.cellBorderWidth / 2
+        const bandTop = coverY + coverHeight
+        const bandHeight = Math.max(0, innerBottom - bandTop)
+
         ctx.fillStyle = "black"
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
-        const cellTitleMaxWidth = cellWidth - config.cellPadding * 2
-        const cellTitleSize = fitFontSize(
+
+        const cellTitleMaxWidth = Math.max(1, coverWidth - config.cellPadding)
+        const titleSize = fitFontSize(
           ctx,
           cell.title,
           config.cellTitleFontSize,
           cellTitleMaxWidth,
           (size) => `600 ${size}px ${SERIF_FONT}`
         )
-        ctx.font = `600 ${cellTitleSize}px ${SERIF_FONT}`
-        ctx.fillText(
-          cell.title,
-          x + cellWidth / 2,
-          coverY + coverHeight + config.cellTitleMargin + config.cellTitleFontSize / 2
-        )
+        // 以墨迹高度排版：不把行盒上下留白算进可视块，整组才是真居中
+        const titleInkHeight = titleSize * 0.92
+        const titleAscent = titleSize * 0.8
 
-        // 作品名（无衬线体，最多两行）
-        if (cell.name) {
-          const nameMaxWidth = cellWidth - config.cellPadding * 4
-          const baseNameSize = config.cellNameFontSize
-          const rawName = cell.name.replace(/\\n/g, "\n")
-          const manualBreak = rawName.indexOf("\n")
-          const hasManualBreak = manualBreak !== -1
-          const nameText = hasManualBreak
-            ? rawName.replace(/\n/g, " ")
-            : rawName
+        const nameMaxWidth = cellWidth - config.cellPadding * 2
+        const rawName = cell.name ? cell.name.replace(/\\n/g, "\n") : ""
+        const hasManualBreak = rawName.indexOf("\n") !== -1
+        const nameText = hasManualBreak ? rawName.replace(/\n/g, " ") : rawName
+        const nameGap = config.cellNameMargin * 0.5
 
-          ctx.fillStyle = "#4b5563"
-          ctx.textBaseline = "alphabetic"
-          const nameTop =
-            coverY + coverHeight + config.cellTitleMargin + config.cellTitleFontSize + config.cellNameMargin
-
-          let nameSize = Math.floor(baseNameSize)
-          ctx.font = `400 ${nameSize}px ${SANS_FONT}`
-          const fitsOneLine = ctx.measureText(rawName).width <= nameMaxWidth
-
-          if (hasManualBreak || !fitsOneLine) {
-            nameSize = Math.floor(baseNameSize * 0.85)
-            ctx.font = `400 ${nameSize}px ${SANS_FONT}`
-          }
-
+        const layoutName = (size: number, maxLines: number): string[] => {
+          if (!rawName) return []
+          ctx.font = `400 ${size}px ${SANS_FONT}`
           const lines = hasManualBreak
             ? rawName
                 .split("\n")
-                .slice(0, 2)
+                .slice(0, maxLines)
                 .map((line) => {
                   if (ctx.measureText(line).width <= nameMaxWidth) return line
                   return wrapText(ctx, line, nameMaxWidth, 1)[0] ?? ""
                 })
-            : wrapText(ctx, nameText, nameMaxWidth, 2)
-
-          lines.forEach((line, lineIndex) => {
-            if (!line) return
-            const lineY =
-              nameTop +
-              nameSize +
-              lineIndex * (nameSize + 1) -
-              (hasManualBreak || !fitsOneLine ? 4 : 0)
-            ctx.fillText(line, x + cellWidth / 2, lineY)
-          })
-          ctx.textBaseline = "middle"
+            : wrapText(ctx, nameText, nameMaxWidth, maxLines)
+          return lines.filter((line) => line.length > 0)
         }
+
+        const nameInkFactor = 0.95
+        const nameAscentFactor = 0.8
+        const nameLineGapFactor = 0.4
+        const maxBlockHeight = bandHeight * 0.94
+
+        let nameSize = baseNameSize
+        if (reservedLines > 0) {
+          const available = maxBlockHeight - titleInkHeight - nameGap
+          const unitsPerLine = nameInkFactor + nameLineGapFactor
+          const denominator =
+            reservedLines * unitsPerLine - nameLineGapFactor
+          const required = baseNameSize * denominator
+          if (required > available) {
+            nameSize = Math.max(
+              10,
+              Math.min(baseNameSize, Math.floor(available / denominator))
+            )
+          }
+        }
+        const nameInkHeight = nameSize * nameInkFactor
+        const nameAscent = nameSize * nameAscentFactor
+        const nameLineGap = nameSize * nameLineGapFactor
+
+        // 小格子放不下预留行时逐行退让，绝不让名字压到奖项标题
+        let fitLines = reservedLines
+        while (fitLines > 0) {
+          const needed =
+            titleInkHeight +
+            nameGap +
+            fitLines * nameInkHeight +
+            (fitLines - 1) * nameLineGap
+          if (needed <= bandHeight) break
+          fitLines--
+        }
+        const nameLines =
+          fitLines > 0 ? layoutName(nameSize, fitLines) : []
+
+        const blockHeight =
+          titleInkHeight +
+          (fitLines > 0
+            ? nameGap +
+              fitLines * nameInkHeight +
+              (fitLines - 1) * nameLineGap
+            : 0)
+        const blockTop = bandTop + Math.max(0, bandHeight - blockHeight) / 2
+
+        ctx.textBaseline = "alphabetic"
+        ctx.font = `600 ${titleSize}px ${SERIF_FONT}`
+        ctx.fillText(
+          cell.title,
+          x + cellWidth / 2,
+          blockTop + titleAscent
+        )
+
+        if (nameLines.length > 0) {
+          ctx.fillStyle = "#4b5563"
+          ctx.font = `400 ${nameSize}px ${SANS_FONT}`
+          const nameTop = blockTop + titleInkHeight + nameGap
+          const lineOffset =
+            ((fitLines - nameLines.length) *
+              (nameInkHeight + nameLineGap)) /
+            2
+          nameLines.forEach((line, lineIndex) => {
+            ctx.fillText(
+              line,
+              x + cellWidth / 2,
+              nameTop +
+                lineOffset +
+                nameAscent +
+                lineIndex * (nameInkHeight + nameLineGap)
+            )
+          })
+        }
+        ctx.textBaseline = "middle"
       })
 
       // 水印：左下作者，右下站点
