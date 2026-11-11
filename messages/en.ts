@@ -1,7 +1,7 @@
 const en = {
   meta: {
     title: 'ACGMN+ Personal Preferences Chart｜ACGMN+ Chart Generator',
-    description: 'Create your ACGMN+ personal preferences chart (ACGMN+ chart/4×6 grid with 24 cells) with multilingual support and customizable cells. Export high-quality images with one click.',
+    description: 'Create your ACGMN+ personal preferences chart (9, 16 or 24 cells, or any custom grid) with multilingual support and customizable cells. Export high-quality images with one click.',
   },
   global: {
     main_title: 'ACGMN+ Personal Preferences Chart',
@@ -35,9 +35,49 @@ const en = {
   "Most Wanted to Roast",
   "Best Story",
 ],
+  grid: {
+    size: 'Grid',
+    rows: 'Rows',
+    cols: 'Cols',
+    custom: 'Custom',
+    custom_hint: 'Up to 10 × 10',
+    placeholder_title: 'To fill',
+    example: 'See example',
+    clear: 'Clear cell',
+    clear_confirm: 'Clear this cell?',
+  },
+  cell_titles_9: [
+    'Gateway',
+    'Favorite',
+    'Must Recommend',
+    'Most Fun',
+    'Most Moving',
+    'Guilty Pleasure',
+    'Longest Companion',
+    'Best Story',
+    'Most Disliked',
+  ],
+  cell_titles_16: [
+    'Gateway',
+    'Favorite',
+    'Must Recommend',
+    'Longest Companion',
+    'Most Fun',
+    'Most Moving',
+    'Guilty Pleasure',
+    'Best Story',
+    'Most Awaited Sequel',
+    'Longest Backlog',
+    'Nostalgia Trip',
+    'Wish I Watched Sooner',
+    'Underrated Gem',
+    'Most Disliked',
+    'Overrated',
+    'Most Hated',
+  ],
   ui: {
     tip_edit:
-      'Tip: Click on headers, cell titles, or work names to edit; you can also drag and drop images directly into cells. Work names support auto line breaks, or use ＼n for manual line breaks. Original Work: Github @ SomiaWhiteRing',
+      'Tip: click any title to edit. Click a cover to search for an image, or drag one in / paste a link. Work names wrap automatically; type ＼n to force a break. For the main title, ＼n starts a second line and a second line beginning with ＼x becomes a subtitle. Original Work: Github @ SomiaWhiteRing',
     generate: 'Generate {title}!',
     generate_failed: 'Failed to generate the image, please retry',
   },
@@ -45,6 +85,7 @@ const en = {
     edit_title: 'Edit Title',
     edit_game_name: 'Edit Work Name',
     edit_main_title: 'Edit Main Title',
+    main_title_hint: 'Enter for a new line; start the second line with ＼x to make it a subtitle',
   },
   common: {
     cancel: 'Cancel',
@@ -109,7 +150,7 @@ const en = {
     storage_quota: 'Local storage is full; the image could not be saved. Delete some saved covers and retry.',
   },
   a11y: {
-    grid_label: 'ACGMN+ preferences chart, 24 cells. Use arrow keys to move and Enter to edit the focused cell.',
+    grid_label: 'ACGMN+ preferences chart. Use arrow keys to move and Enter to edit the focused cell.',
   },
 };
 

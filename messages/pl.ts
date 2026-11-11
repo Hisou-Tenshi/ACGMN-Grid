@@ -35,6 +35,17 @@ const pl = {
   "Najbardziej do Zrzędzenia",
   "Najlepsza Fabuła",
 ],
+  grid: {
+    size: 'Siatka',
+    rows: 'Wiersze',
+    cols: 'Kolumny',
+    custom: 'Własna',
+    custom_hint: 'Do 10 × 10',
+    placeholder_title: 'Do uzupełnienia',
+    example: 'Zobacz przykład',
+    clear: 'Wyczyść pole',
+    clear_confirm: 'Wyczyścić to pole?',
+  },
   ui: {
     tip_edit:
       'Wskazówka: Kliknij nagłówki, tytuły pól lub nazwy dzieł, aby edytować; możesz także przeciągać obrazy bezpośrednio do pól. Nazwy dzieł obsługują automatyczne zawijanie wierszy, użyj ＼n dla wymuszonego podziału. Oryginalne Dzieło: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const pl = {
     edit_title: 'Edytuj Tytuł',
     edit_game_name: 'Edytuj Nazwę Dzieła',
     edit_main_title: 'Edytuj Tytuł Główny',
+    main_title_hint: 'Enter dodaje drugą linię; zacznij ją od ＼x, aby stała się podtytułem',
   },
   common: {
     cancel: 'Anuluj',
@@ -109,7 +121,7 @@ const pl = {
     storage_quota: 'Pamięć lokalna jest pełna; obraz nie został zapisany. Usuń kilka okładek i spróbuj ponownie.',
   },
   a11y: {
-    grid_label: 'Tabela preferencji ACGMN+, 24 pola. Użyj strzałek, aby się poruszać, a Enter edytuje aktywne pole.',
+    grid_label: 'Tabela preferencji ACGMN+. Strzałki — ruch, Enter — edycja aktywnego pola.',
   },
 };
 

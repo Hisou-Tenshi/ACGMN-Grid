@@ -37,6 +37,41 @@ export const DB_CONFIG: DBConfig = {
   version: 1
 };
 
+/**
+ * 9 格 / 16 格的默认标题（英文兜底）
+ * 其他语系在 messages/*.ts 里提供同名数组；缺省时回退到这两份。
+ */
+export const FALLBACK_CELL_TITLES_9: string[] = [
+  "Gateway",
+  "Favorite",
+  "Must Recommend",
+  "Most Fun",
+  "Most Moving",
+  "Guilty Pleasure",
+  "Longest Companion",
+  "Best Story",
+  "Most Disliked",
+];
+
+export const FALLBACK_CELL_TITLES_16: string[] = [
+  "Gateway",
+  "Favorite",
+  "Must Recommend",
+  "Longest Companion",
+  "Most Fun",
+  "Most Moving",
+  "Guilty Pleasure",
+  "Best Story",
+  "Most Awaited Sequel",
+  "Longest Backlog",
+  "Nostalgia Trip",
+  "Wish I Watched Sooner",
+  "Underrated Gem",
+  "Most Disliked",
+  "Overrated",
+  "Most Hated",
+];
+
 
 // 添加 Canvas.roundRect polyfill，以兼容旧版浏览器
 interface BorderRadius {

@@ -35,6 +35,17 @@ const es = {
   "El Que Más Critico",
   "Mejor Historia",
 ],
+  grid: {
+    size: 'Cuadrícula',
+    rows: 'Filas',
+    cols: 'Columnas',
+    custom: 'Personalizado',
+    custom_hint: 'Hasta 10 × 10',
+    placeholder_title: 'Por completar',
+    example: 'Ver ejemplo',
+    clear: 'Vaciar celda',
+    clear_confirm: '¿Vaciar esta celda?',
+  },
   ui: {
     tip_edit:
       'Consejo: Haz clic en los títulos superiores, títulos de celdas o nombres de obras para editarlos; también puedes arrastrar imágenes directamente a las celdas. Los nombres de obras admiten saltos de línea automáticos, o usa ＼n para un salto manual. Obra Original: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const es = {
     edit_title: 'Editar Título',
     edit_game_name: 'Editar Nombre de Obra',
     edit_main_title: 'Editar Título Principal',
+    main_title_hint: 'Enter para una segunda línea; si empieza con ＼x será un subtítulo',
   },
   common: {
     cancel: 'Cancelar',
@@ -109,7 +121,7 @@ const es = {
     storage_quota: 'El almacenamiento local está lleno; la imagen no se guardó. Borra algunas portadas e inténtalo de nuevo.',
   },
   a11y: {
-    grid_label: 'Tabla de preferencias ACGMN+, 24 celdas. Usa las flechas para moverte y Enter para editar la celda actual.',
+    grid_label: 'Tabla de preferencias ACGMN+. Usa las flechas para moverte y Enter para editar la celda activa.',
   },
 };
 

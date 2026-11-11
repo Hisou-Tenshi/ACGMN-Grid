@@ -1,0 +1,35 @@
+name: Convert example screenshot to WebP
+
+on:
+  push:
+    paths:
+      - "screenshot/example.png"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install WebP tools
+        run: sudo apt-get update && sudo apt-get install -y webp
+
+      - name: Convert screenshot (1600px wide, q82)
+        run: cwebp -q 82 -resize 1600 0 screenshot/example.png -o public/example.webp
+
+      - name: Commit updated WebP
+        run: |
+          if git diff --quiet -- public/example.webp; then
+            echo "No change to public/example.webp"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/example.webp
+          git commit -m "chore: update example screenshot webp"
+          git push

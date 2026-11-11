@@ -35,6 +35,17 @@ const de = {
   "Am meisten zu meckern",
   "Beste Story",
 ],
+  grid: {
+    size: 'Raster',
+    rows: 'Zeilen',
+    cols: 'Spalten',
+    custom: 'Benutzerdefiniert',
+    custom_hint: 'Bis zu 10 × 10',
+    placeholder_title: 'Noch leer',
+    example: 'Beispiel ansehen',
+    clear: 'Feld leeren',
+    clear_confirm: 'Dieses Feld leeren?',
+  },
   ui: {
     tip_edit:
       'Tipp: Klicke auf Überschriften, Feldtitel oder Namen zum Bearbeiten. Ziehe Bilder per Drag & Drop in die Felder. Namen haben automatischen Zeilenumbruch, verwende \\n für manuellen Umbruch. Original Work: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const de = {
     edit_title: 'Titel bearbeiten',
     edit_game_name: 'Titel bearbeiten',
     edit_main_title: 'Haupttitel bearbeiten',
+    main_title_hint: 'Enter für eine zweite Zeile; beginnt sie mit ＼x, wird sie zur Unterzeile',
   },
   common: {
     cancel: 'Abbrechen',
@@ -109,7 +121,7 @@ const de = {
     storage_quota: 'Lokaler Speicher voll, das Bild konnte nicht gespeichert werden. Bitte gespeicherte Cover löschen und erneut versuchen.',
   },
   a11y: {
-    grid_label: 'ACGMN+ Vorlieben-Tabelle, 24 Felder. Mit Pfeiltasten bewegen, Enter bearbeitet das aktuelle Feld.',
+    grid_label: 'ACGMN+ Vorlieben-Tabelle. Mit Pfeiltasten bewegen, Enter bearbeitet das aktive Feld.',
   },
 };
 

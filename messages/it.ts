@@ -35,6 +35,17 @@ const it = {
   "Il Più Da Criticare",
   "Migliore Storia",
 ],
+  grid: {
+    size: 'Griglia',
+    rows: 'Righe',
+    cols: 'Colonne',
+    custom: 'Personalizzato',
+    custom_hint: 'Fino a 10 × 10',
+    placeholder_title: 'Da compilare',
+    example: 'Vedi esempio',
+    clear: 'Svuota cella',
+    clear_confirm: 'Svuotare questa cella?',
+  },
   ui: {
     tip_edit:
       'Suggerimento: Clicca su titoli, intestazioni delle celle o nomi delle opere per modificarli; puoi anche trascinare immagini direttamente nelle celle. I nomi delle opere supportano l\'a capo automatico, oppure usa ＼n per un a capo forzato. Opera Originale: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const it = {
     edit_title: 'Modifica Titolo',
     edit_game_name: 'Modifica Nome Opera',
     edit_main_title: 'Modifica Titolo Principale',
+    main_title_hint: 'Invio per una seconda riga; inizia con ＼x per farla diventare un sottotitolo',
   },
   common: {
     cancel: 'Annulla',
@@ -109,7 +121,7 @@ const it = {
     storage_quota: 'Spazio locale pieno; l\'immagine non è stata salvata. Elimina alcune copertine e riprova.',
   },
   a11y: {
-    grid_label: 'Tabella delle preferenze ACGMN+, 24 celle. Usa le frecce per spostarti e Invio per modificare la cella attiva.',
+    grid_label: 'Tabella delle preferenze ACGMN+. Usa le frecce per spostarti e Invio per modificare la cella attiva.',
   },
 };
 

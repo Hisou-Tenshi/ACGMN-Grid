@@ -35,6 +35,17 @@ const fr = {
   "Le Plus Taquiné",
   "Meilleure Histoire",
 ],
+  grid: {
+    size: 'Grille',
+    rows: 'Lignes',
+    cols: 'Colonnes',
+    custom: 'Personnalisé',
+    custom_hint: 'Jusqu\'à 10 × 10',
+    placeholder_title: 'À remplir',
+    example: 'Voir un exemple',
+    clear: 'Vider la case',
+    clear_confirm: 'Vider cette case ?',
+  },
   ui: {
     tip_edit:
       'Astuce : Cliquez sur les en-têtes, titres des cellules ou noms des œuvres pour modifier ; vous pouvez aussi glisser-déposer des images directement dans les cellules. Les noms des œuvres supportent les retours à la ligne automatiques, ou utilisez ＼n pour un retour manuel. Œuvre Originale : Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const fr = {
     edit_title: 'Modifier le Titre',
     edit_game_name: 'Modifier le Nom de l\'Œuvre',
     edit_main_title: 'Modifier le Titre Principal',
+    main_title_hint: 'Entrée pour une 2e ligne ; commencez-la par ＼x pour en faire un sous-titre',
   },
   common: {
     cancel: 'Annuler',
@@ -109,7 +121,7 @@ const fr = {
     storage_quota: 'Stockage local plein ; l\'image n\'a pas été enregistrée. Supprimez des couvertures puis réessayez.',
   },
   a11y: {
-    grid_label: 'Tableau de préférences ACGMN+, 24 cases. Utilisez les flèches pour vous déplacer et Entrée pour éditer la case active.',
+    grid_label: 'Tableau de préférences ACGMN+. Utilisez les flèches pour vous déplacer et Entrée pour éditer la case active.',
   },
 };
 

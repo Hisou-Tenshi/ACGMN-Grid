@@ -1,7 +1,7 @@
 const zhCN = {
   meta: {
     title: 'ACGMN+生涯个人喜好表｜ACGMN+喜好表生成器',
-    description: '创建你的ACGMN+生涯喜好表（ACGMN+喜好表/24格），支持多语言与自定义格子，一键导出高清图片。',
+    description: '创建你的ACGMN+生涯喜好表（9 / 16 / 24 格，也可自由选择行列），支持多语言与自定义格子，一键导出高清图片。',
   },
   global: {
     main_title: 'ACGMN+生涯个人喜好表',
@@ -35,9 +35,49 @@ const zhCN = {
   "最想吐槽",
   "最佳剧情",
 ],
+  grid: {
+    size: '格子',
+    rows: '行',
+    cols: '列',
+    custom: '自定义',
+    custom_hint: '最多 10 行 × 10 列',
+    placeholder_title: '待填写',
+    example: '看示例',
+    clear: '清空格子',
+    clear_confirm: '确定清空这个格子吗？',
+  },
+  cell_titles_9: [
+    '入坑作',
+    '最喜欢',
+    '最想安利',
+    '最快乐',
+    '最感动',
+    '最爱泡面',
+    '最长陪伴',
+    '最佳剧情',
+    '最讨厌',
+  ],
+  cell_titles_16: [
+    '入坑作',
+    '最喜欢',
+    '最想安利',
+    '最长陪伴',
+    '最快乐',
+    '最感动',
+    '最爱泡面',
+    '最佳剧情',
+    '最期续作',
+    '最久待补',
+    '爷青回',
+    '相见恨晚',
+    '小众最爱',
+    '最想吐槽',
+    '最过誉',
+    '最讨厌',
+  ],
   ui: {
     tip_edit:
-      'Ciallo～(∠・ω＜ )⌒★\n提示：点击顶部标题、格子标题或作品名称可以编辑；也可直接拖拽图片到格子中，或通过链接直接下载。作品名称支持自动换行，也可输入＼n强制换行一次。\n原作: [Github@SomiaWhiteRing](https://github.com/SomiaWhiteRing)\n借物表：【[游戏生涯九宫格](https://github.com/SomiaWhiteRing/game-grid/)】【[动画生涯九宫格](https://github.com/itorr/anime-grid)】',
+      'Ciallo～(∠・ω＜ )⌒★\n点击标题即可编辑；点封面搜索图片，也可拖拽图片或用链接下载。作品名支持自动换行，输入＼n可强制换行；主标题输入＼n分成两行，第二行以＼x开头会变成小标题。\n原作: [Github@SomiaWhiteRing](https://github.com/SomiaWhiteRing)\n借物表：【[游戏生涯九宫格](https://github.com/SomiaWhiteRing/game-grid/)】【[动画生涯九宫格](https://github.com/itorr/anime-grid)】',
     generate: '生成{title}！',
     generate_failed: '生成图片失败，请重试',
   },
@@ -45,6 +85,7 @@ const zhCN = {
     edit_title: '编辑标题',
     edit_game_name: '编辑对象名称',
     edit_main_title: '编辑主标题',
+    main_title_hint: '回车换行；第二行以 ＼x 开头会变成小标题',
   },
   common: {
     cancel: '取消',
@@ -109,7 +150,7 @@ const zhCN = {
     storage_quota: '本地存储空间不足，图片未能保存。请删除部分已保存封面后重试。',
   },
   a11y: {
-    grid_label: 'ACGMN+ 生涯个人喜好表，24 个格子。使用方向键移动，回车编辑当前格子。',
+    grid_label: 'ACGMN+ 生涯个人喜好表。使用方向键移动，回车编辑当前格子。',
   },
 };
 

@@ -101,13 +101,14 @@ export default function Home() {
           </p>
           <p className="whitespace-nowrap text-xs sm:text-sm">{t('footer.credit')}</p>
         </div>
-        <p className="flex items-center justify-center mb-1">
-          {t('footer.if_useful_star')}
+        <p className="flex items-center justify-center">{t('footer.powered_by')}</p>
+        <p className="mt-1 flex items-center justify-center gap-2">
           <a
             href="https://github.com/Hisou-Tenshi/ACGMN-Grid/"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 inline-flex items-center"
+            className="inline-flex items-center"
+            aria-label="GitHub Stars"
           >
             <img
               src="https://img.shields.io/github/stars/Hisou-Tenshi/ACGMN-Grid?style=social"
@@ -115,18 +116,15 @@ export default function Home() {
               className="align-middle"
             />
           </a>
-        </p>
-        <p className="flex items-center justify-center">{t('footer.powered_by')}</p>
-        <p className="flex items-center justify-center">{t('footer.official_link')}</p>
-        <p className="flex items-center justify-center mt-1">
           <a
             href="https://hits.sh/github.com/Hisou-Tenshi/ACGMN-Grid/"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 inline-flex items-center"
+            className="inline-flex items-center"
+            aria-label="Visitors Count"
           >
             <img
-              src="https://hits.sh/github.com/Hisou-Tenshi/ACGMN-Grid.svg?label=visitors&color=007ec6"
+              src="https://hits.sh/github.com/Hisou-Tenshi/ACGMN-Grid.svg?color=007ec6"
               alt="Visitors Count"
               className="align-middle"
             />
@@ -172,7 +170,7 @@ export default function Home() {
                   acceptedAnswer: {
                     '@type': 'Answer',
                     text:
-                      '一种用 4×6 二十四格布局展示你对不同维度「最爱、最惊艳、最治愈」等的ACGMN+偏好，可导出分享。',
+                      '一种用 9、16 或 24 格布局展示你对不同维度「最爱、最惊艳、最治愈」等的ACGMN+偏好，也支持自定义行列，可导出分享。',
                   },
                 },
                 {

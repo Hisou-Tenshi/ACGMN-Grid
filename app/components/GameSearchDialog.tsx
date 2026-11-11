@@ -6,7 +6,7 @@ import NextImage from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Gamepad2, Loader2, AlertCircle, Search, RefreshCw, Info, Upload } from "lucide-react"
+import { Gamepad2, Loader2, AlertCircle, Search, RefreshCw, Info, Upload, Trash2 } from "lucide-react"
 import { GameSearchResult } from "../types"
 import { useI18n } from "@/lib/i18n/provider"
 import { getSearchImageSources } from "../utils/imageProxy"
@@ -23,6 +23,8 @@ interface GameSearchDialogProps {
   onOpenChange: (open: boolean) => void
   onSelectGame: (game: GameSearchResult) => void
   onUploadImage?: (file: File) => void
+  /** 清空当前格子（恢复默认标题、移除封面与作品名） */
+  onClearCell?: () => void
 }
 
 /**
@@ -69,7 +71,7 @@ function SearchResultCover({ game }: { game: GameSearchResult }) {
 /**
  * 游戏搜索对话框组件
  */
-export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadImage }: GameSearchDialogProps) {
+export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadImage, onClearCell }: GameSearchDialogProps) {
   const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<GameSearchResult[]>([])
@@ -633,6 +635,19 @@ export function GameSearchDialog({ isOpen, onOpenChange, onSelectGame, onUploadI
             >
               {t('common.close')}
             </Button>
+            {onClearCell && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClearCell}
+                aria-label={String(t('grid.clear'))}
+                className="w-full sm:w-auto text-gray-600 hover:text-red-600"
+                title={String(t('grid.clear'))}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="ml-1">{t('grid.clear')}</span>
+              </Button>
+            )}
             {onUploadImage && (
               <div className="relative flex-1 sm:flex-none">
                 <input

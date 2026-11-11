@@ -1,18 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { GameCell } from "../types"
-import { CANVAS_CONFIG } from "../constants"
-import { getCellIdFromCoordinates } from "../utils/canvas"
+import { CanvasConfig, GameCell } from "../types"
 import { saveToIndexedDB } from "../utils/indexedDB"
-import { getClickArea, cropImageToAspectRatio } from "@/app/utils/canvasHelpers"
+import { cropImageToAspectRatio } from "@/app/utils/canvasHelpers"
+import {
+  getClickTarget,
+  getCellIdAtPoint,
+  isMainTitleHit,
+} from "@/app/utils/gridLayout"
 import { log, warn, error as logError } from "@/lib/logger"
 import { useI18n } from "@/lib/i18n/provider"
 
 interface UseCanvasEventsProps {
   cells: GameCell[]
   setCells: React.Dispatch<React.SetStateAction<GameCell[]>>
-  scale: number
+  config: CanvasConfig
   openSearchDialog: (cellId: number) => void
   openTitleEditDialog: (cellId: number) => void
   openNameEditDialog: (cellId: number) => void
@@ -79,7 +82,7 @@ function downloadDataUrl(dataUrl: string, fileName: string): void {
 export function useCanvasEvents({
   cells,
   setCells,
-  scale,
+  config,
   openSearchDialog,
   openTitleEditDialog,
   openNameEditDialog,
@@ -95,34 +98,27 @@ export function useCanvasEvents({
     const canvas = e.currentTarget;
     if (!canvas) return;
 
-    // 获取点击坐标(考虑缩放)
+    // 获取点击坐标(按画布实际像素换算)
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const x = ((e.clientX - rect.left) * config.width) / rect.width;
+    const y = ((e.clientY - rect.top) * config.height) / rect.height;
 
     // 检查是否点击了主标题区域
-    if (y < CANVAS_CONFIG.padding + CANVAS_CONFIG.titleHeight) {
+    if (isMainTitleHit(x, y, config)) {
       openMainTitleEditDialog();
       return;
     }
 
     // 检查点击的是哪个单元格
-    const cellId = getCellIdFromCoordinates(x, y, CANVAS_CONFIG);
-    if (cellId !== null) {
-      // 检查点击的具体区域
-      const clickArea = getClickArea(x, y, cellId, CANVAS_CONFIG);
-      log(cellId, clickArea);
-      
-      // 根据点击区域执行不同操作
-      if (clickArea === "image") {
-        // 点击图片区域,打开搜索对话框
-        openSearchDialog(cellId);
-      } else if (clickArea === "title") {
-        // 点击标题区域,编辑标题
-        openTitleEditDialog(cellId);
-      } else if (clickArea === "name") {
-        // 点击游戏名称区域,编辑游戏名称
-        openNameEditDialog(cellId);
+    const target = getClickTarget(x, y, config);
+    if (target) {
+      log(target.cellId, target.area);
+      if (target.area === "image") {
+        openSearchDialog(target.cellId);
+      } else if (target.area === "title") {
+        openTitleEditDialog(target.cellId);
+      } else {
+        openNameEditDialog(target.cellId);
       }
     }
   };
@@ -131,13 +127,13 @@ export function useCanvasEvents({
   const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
     e.preventDefault()
 
-    // 获取拖拽坐标(考虑缩放)
+    // 获取拖拽坐标(按画布实际像素换算)
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / scale
-    const y = (e.clientY - rect.top) / scale
+    const x = ((e.clientX - rect.left) * config.width) / rect.width
+    const y = ((e.clientY - rect.top) * config.height) / rect.height
 
     // 获取拖拽经过的单元格
-    const cellId = getCellIdFromCoordinates(x, y, CANVAS_CONFIG)
+    const cellId = getCellIdAtPoint(x, y, config)
 
     // 更新拖拽经过的单元格ID
     setDragOverCellId(cellId)
@@ -171,11 +167,11 @@ export function useCanvasEvents({
 
     // 获取拖拽坐标(考虑缩放)
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / scale
-    const y = (e.clientY - rect.top) / scale
+    const x = ((e.clientX - rect.left) * config.width) / rect.width
+    const y = ((e.clientY - rect.top) * config.height) / rect.height
 
     // 获取拖拽放置的单元格
-    const cellId = getCellIdFromCoordinates(x, y, CANVAS_CONFIG)
+    const cellId = getCellIdAtPoint(x, y, config)
 
     // 清除拖拽状态
     setDragOverCellId(null)
@@ -272,7 +268,9 @@ export function useCanvasEvents({
     try {
       const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
-      let baseFileName = String(t("meta.title"))
+      let baseFileName =
+        (typeof document !== "undefined" && document.title) ||
+        String(t("meta.title"))
       try {
         const savedConfig = localStorage.getItem(`gameGridGlobalConfig_${locale}`)
         if (savedConfig) {

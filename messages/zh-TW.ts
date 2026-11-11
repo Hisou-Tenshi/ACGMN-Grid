@@ -35,6 +35,46 @@ const zhTW = {
   "最想吐槽",
   "最佳劇情",
 ],
+  grid: {
+    size: '格子',
+    rows: '行',
+    cols: '列',
+    custom: '自訂',
+    custom_hint: '最多 10 行 × 10 列',
+    placeholder_title: '待填寫',
+    example: '看範例',
+    clear: '清空格子',
+    clear_confirm: '確定清空這個格子嗎？',
+  },
+  cell_titles_9: [
+    '入坑作',
+    '最喜歡',
+    '最想推薦',
+    '最快樂',
+    '最感動',
+    '最愛泡麵',
+    '最長陪伴',
+    '最佳劇情',
+    '最討厭',
+  ],
+  cell_titles_16: [
+    '入坑作',
+    '最喜歡',
+    '最想推薦',
+    '最長陪伴',
+    '最快樂',
+    '最感動',
+    '最愛泡麵',
+    '最佳劇情',
+    '最期待續作',
+    '最久待補',
+    '爺青回',
+    '相見恨晚',
+    '小眾最愛',
+    '最想吐槽',
+    '最過譽',
+    '最討厭',
+  ],
   ui: {
     tip_edit:
       '提示：點擊頂部標題、格位標題或作品名稱可以編輯；也可直接拖曳圖片到格位中。作品名稱支援自動換行，也可輸入＼n強制換行一次。Original Work: Github @ SomiaWhiteRing',
@@ -45,6 +85,7 @@ const zhTW = {
     edit_title: '編輯標題',
     edit_game_name: '編輯作品名稱',
     edit_main_title: '編輯主標題',
+    main_title_hint: '按 Enter 換行；第二行以 ＼x 開頭會變成小標題',
   },
   common: {
     cancel: '取消',
@@ -109,7 +150,7 @@ const zhTW = {
     storage_quota: '本機儲存空間不足，圖片未能儲存。請刪除部分已儲存封面後重試。',
   },
   a11y: {
-    grid_label: 'ACGMN+ 生涯個人喜好表，24 個格子。使用方向鍵移動，Enter 編輯目前格子。',
+    grid_label: 'ACGMN+ 生涯個人喜好表。使用方向鍵移動，Enter 編輯目前格子。',
   },
 };
 

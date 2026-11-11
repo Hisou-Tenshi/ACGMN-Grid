@@ -2,10 +2,16 @@
 
 import { useState, useEffect, RefObject } from "react"
 import { error as logError } from "@/lib/logger"
-import { GameCell, GlobalConfig } from "../types"
-import { CANVAS_CONFIG, isBrowser } from "../constants"
-import { gamepadIconPath } from "../utils/canvas"
+import { GameCell, GlobalConfig, CanvasConfig } from "../types"
+import { isBrowser } from "../constants"
+import { BILIBILI_ICON_PATHS, BILIBILI_ICON_VIEWBOX } from "../utils/bilibiliIcon"
 import { getSelectImageSources } from "../utils/imageProxy"
+import { parseMainTitle } from "../utils/gridLayout"
+
+const SERIF_FONT =
+  '"Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", "Times New Roman", serif'
+const SANS_FONT =
+  '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif'
 
 interface UseCanvasRendererProps {
   canvasRef: RefObject<HTMLCanvasElement>
@@ -14,6 +20,78 @@ interface UseCanvasRendererProps {
   dragOverCellId: number | null
   focusCellId?: number | null
   globalConfig: GlobalConfig
+  config: CanvasConfig
+}
+
+let cachedIconPaths: Path2D[] | null = null
+function getIconPaths(): Path2D[] {
+  if (!cachedIconPaths) {
+    cachedIconPaths = BILIBILI_ICON_PATHS.map((d) => new Path2D(d))
+  }
+  return cachedIconPaths
+}
+
+/** 把一行文字缩小到能放进 maxWidth，返回字号 */
+function fitFontSize(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  baseSize: number,
+  maxWidth: number,
+  font: (size: number) => string
+): number {
+  if (!text) return baseSize
+  ctx.font = font(baseSize)
+  const width = ctx.measureText(text).width
+  if (width <= maxWidth || width === 0) return baseSize
+  return Math.max(baseSize * 0.4, Math.floor((baseSize * maxWidth) / width))
+}
+
+/** 贪心折行（可处理西文空格与中日文逐字） */
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxLines: number
+): string[] {
+  const lines: string[] = []
+  let current = ""
+
+  const pushChar = (unit: string) => {
+    const next = current + unit
+    if (ctx.measureText(next).width <= maxWidth || current.length === 0) {
+      current = next
+    } else {
+      lines.push(current)
+      current = unit
+    }
+  }
+
+  const words = text.split(" ")
+  if (words.length > 1) {
+    for (let i = 0; i < words.length; i++) {
+      const unit = (i === 0 ? "" : " ") + words[i]
+      const next = current + unit
+      if (ctx.measureText(next).width <= maxWidth || current.length === 0) {
+        current = next
+      } else {
+        lines.push(current)
+        current = words[i]
+      }
+    }
+  } else {
+    Array.from(text).forEach(pushChar)
+  }
+  if (current) lines.push(current)
+
+  if (lines.length <= maxLines) return lines
+
+  const kept = lines.slice(0, maxLines)
+  let last = kept[maxLines - 1]
+  while (last.length > 0 && ctx.measureText(last + "…").width > maxWidth) {
+    last = last.slice(0, -1)
+  }
+  kept[maxLines - 1] = last + "…"
+  return kept
 }
 
 export function useCanvasRenderer({
@@ -23,6 +101,7 @@ export function useCanvasRenderer({
   dragOverCellId,
   focusCellId = null,
   globalConfig,
+  config,
 }: UseCanvasRendererProps) {
   const [scale, setScale] = useState(1)
   const [canvasLoaded, setCanvasLoaded] = useState(false)
@@ -35,429 +114,291 @@ export function useCanvasRenderer({
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
+    const { width, height, padding } = config
+
     try {
-      // 清空画布
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // 绘制白色背景
+      // 清空并绘制白色背景
+      ctx.clearRect(0, 0, width, height)
       ctx.fillStyle = "white"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillRect(0, 0, width, height)
 
-      // 绘制标题（自适应缩放过长文本）
+      // 主标题：支持两行，第二行可以以小标题号排版
+      const { line1, line2, line2IsSub } = parseMainTitle(
+        globalConfig.mainTitle || ""
+      )
       ctx.fillStyle = "black"
-      const baseFontSize = CANVAS_CONFIG.titleFontSize
-      ctx.font = `bold ${baseFontSize}px sans-serif`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
 
-      const title = globalConfig.mainTitle || ""
-      const maxWidth = canvas.width - CANVAS_CONFIG.padding * 2
-      const metrics = ctx.measureText(title)
-      let fontSize = baseFontSize
-      if (metrics.width > maxWidth && metrics.width > 0) {
-        const scale = maxWidth / metrics.width
-        fontSize = Math.max(12, Math.floor(baseFontSize * scale))
-        ctx.font = `bold ${fontSize}px sans-serif`
+      const maxTitleWidth = width - padding * 2
+      const baseSize = config.titleFontSize
+      const line1Size = fitFontSize(
+        ctx,
+        line1,
+        baseSize,
+        maxTitleWidth,
+        (size) => `700 ${size}px ${SERIF_FONT}`
+      )
+      const line2Base = line2IsSub ? baseSize * 0.58 : baseSize
+      const line2Size = line2
+        ? fitFontSize(
+            ctx,
+            line2,
+            line2Base,
+            maxTitleWidth,
+            (size) => `700 ${size}px ${SERIF_FONT}`
+          )
+        : 0
+      const gap = line2IsSub ? baseSize * 0.18 : baseSize * 0.22
+
+      if (line2) {
+        const blockHeight = line1Size + gap + line2Size
+        const startY = padding + (config.titleHeight - blockHeight) / 2
+        ctx.font = `700 ${line1Size}px ${SERIF_FONT}`
+        ctx.fillText(line1, width / 2, startY + line1Size / 2)
+        ctx.font = `700 ${line2Size}px ${SERIF_FONT}`
+        ctx.fillText(
+          line2,
+          width / 2,
+          startY + line1Size + gap + line2Size / 2
+        )
+      } else {
+        ctx.font = `700 ${line1Size}px ${SERIF_FONT}`
+        ctx.fillText(
+          line1,
+          width / 2,
+          padding + config.titleHeight / 2
+        )
       }
-
-      const titleY = CANVAS_CONFIG.padding + CANVAS_CONFIG.titleHeight / 2
-      ctx.fillText(title, canvas.width / 2, titleY)
-
-      // 计算网格区域
-      const gridTop = CANVAS_CONFIG.padding + CANVAS_CONFIG.titleHeight
-      const gridWidth = canvas.width - CANVAS_CONFIG.padding * 2
-      const gridHeight = canvas.height - gridTop - CANVAS_CONFIG.padding
-
-      // 计算单元格尺寸
-      const cellWidth = gridWidth / CANVAS_CONFIG.gridCols
-      const cellHeight = gridHeight / CANVAS_CONFIG.gridRows
 
       // 绘制单元格
       cells.forEach((cell, index) => {
-        const row = Math.floor(index / CANVAS_CONFIG.gridCols)
-        const col = index % CANVAS_CONFIG.gridCols
-
-        const x = CANVAS_CONFIG.padding + col * cellWidth
+        if (index >= config.gridRows * config.gridCols) return
+        const row = Math.floor(index / config.gridCols)
+        const col = index % config.gridCols
+        const cellWidth = (width - padding * 2) / config.gridCols
+        const gridTop = padding + config.titleHeight
+        const cellHeight =
+          (height - gridTop - padding) / config.gridRows
+        const x = padding + col * cellWidth
         const y = gridTop + row * cellHeight
 
-        // 绘制单元格边框
+        // 单元格边框
         ctx.strokeStyle = "black"
-        ctx.lineWidth = CANVAS_CONFIG.cellBorderWidth
-
-        // 拖拽目标或键盘焦点格子高亮
+        ctx.lineWidth = config.cellBorderWidth
         if (dragOverCellId === cell.id || focusCellId === cell.id) {
-          ctx.strokeStyle = "#3b82f6" // 蓝色高亮
-          ctx.lineWidth = CANVAS_CONFIG.cellBorderWidth * 2
+          ctx.strokeStyle = "#3b82f6"
+          ctx.lineWidth = config.cellBorderWidth * 2
         }
-
-        // 检查是否支持 roundRect API
-        if (typeof ctx.roundRect === 'function') {
-          ctx.beginPath();
+        const inset = config.cellPadding / 2
+        ctx.beginPath()
+        if (typeof ctx.roundRect === "function") {
           ctx.roundRect(
-            x + CANVAS_CONFIG.cellPadding / 2,
-            y + CANVAS_CONFIG.cellPadding / 2,
-            cellWidth - CANVAS_CONFIG.cellPadding,
-            cellHeight - CANVAS_CONFIG.cellPadding,
-            CANVAS_CONFIG.cellBorderRadius
-          );
-          ctx.stroke();
+            x + inset,
+            y + inset,
+            cellWidth - config.cellPadding,
+            cellHeight - config.cellPadding,
+            config.cellBorderRadius
+          )
         } else {
-          // 对于不支持 roundRect 的浏览器，使用普通矩形
-          ctx.strokeRect(
-            x + CANVAS_CONFIG.cellPadding / 2,
-            y + CANVAS_CONFIG.cellPadding / 2,
-            cellWidth - CANVAS_CONFIG.cellPadding,
-            cellHeight - CANVAS_CONFIG.cellPadding
-          );
+          ctx.rect(
+            x + inset,
+            y + inset,
+            cellWidth - config.cellPadding,
+            cellHeight - config.cellPadding
+          )
         }
+        ctx.stroke()
 
-        // 计算封面区域
-        const coverWidth = cellWidth - CANVAS_CONFIG.cellPadding * 2 - CANVAS_CONFIG.cellBorderWidth * 2
-        const coverHeight = coverWidth / CANVAS_CONFIG.coverRatio
-        const coverX = x + CANVAS_CONFIG.cellPadding + CANVAS_CONFIG.cellBorderWidth
-        const coverY = y + CANVAS_CONFIG.cellPadding + CANVAS_CONFIG.cellBorderWidth
+        // 封面区域
+        const coverX = x + config.cellPadding + config.cellBorderWidth
+        const coverY = y + config.cellPadding + config.cellBorderWidth
+        const coverWidth =
+          cellWidth - config.cellPadding * 2 - config.cellBorderWidth * 2
+        const coverHeight = coverWidth / config.coverRatio
 
-        // 绘制封面区域
         if (cell.imageObj) {
           try {
-            // 绘制游戏封面
-            ctx.drawImage(cell.imageObj, coverX, coverY, coverWidth, coverHeight);
+            ctx.drawImage(cell.imageObj, coverX, coverY, coverWidth, coverHeight)
           } catch (error) {
-            logError(`绘制图片失败: ${cell.name || index}`, error);
-            // 绘制错误占位图
-            drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight);
+            logError(`绘制图片失败: ${cell.name || index}`, error)
+            drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight)
           }
         } else {
-          // 绘制空白封面区域
-          drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight);
+          drawPlaceholder(ctx, coverX, coverY, coverWidth, coverHeight)
         }
 
-        // 绘制标题文字（自适应缩放 + 垂直居中）
+        // 格子标题（衬线体，过长自动缩小）
         ctx.fillStyle = "black"
-        const baseCellTitleFont = CANVAS_CONFIG.cellTitleFontSize
-        ctx.font = `${baseCellTitleFont}px sans-serif`
         ctx.textAlign = "center"
-        // 允许的最大宽度（左右各留出 padding）
-        const cellTitleMaxWidth = cellWidth - CANVAS_CONFIG.cellPadding * 2
-        const cellTitleMetrics = ctx.measureText(cell.title)
-        let cellTitleFontSize = baseCellTitleFont
-        if (cellTitleMetrics.width > cellTitleMaxWidth && cellTitleMetrics.width > 0) {
-          const scale = cellTitleMaxWidth / cellTitleMetrics.width
-          cellTitleFontSize = Math.max(10, Math.floor(baseCellTitleFont * scale))
-          ctx.font = `${cellTitleFontSize}px sans-serif`
-        }
-        // 以固定高度区域居中，确保不同字号的标题基线一致
-        const titleTop = coverY + CANVAS_CONFIG.cellTitleMargin + coverHeight
-        // 使用固定槽位高度（基础字号），保证过长缩小时也垂直居中
-        const titleAreaHeight = baseCellTitleFont
-        const titleCenterY = titleTop + titleAreaHeight / 2
-        const prevBaseline = ctx.textBaseline
         ctx.textBaseline = "middle"
+        const cellTitleMaxWidth = cellWidth - config.cellPadding * 2
+        const cellTitleSize = fitFontSize(
+          ctx,
+          cell.title,
+          config.cellTitleFontSize,
+          cellTitleMaxWidth,
+          (size) => `600 ${size}px ${SERIF_FONT}`
+        )
+        ctx.font = `600 ${cellTitleSize}px ${SERIF_FONT}`
         ctx.fillText(
           cell.title,
           x + cellWidth / 2,
-          titleCenterY + 3,
+          coverY + coverHeight + config.cellTitleMargin + config.cellTitleFontSize / 2
         )
-        ctx.textBaseline = prevBaseline
 
-        // 如果有游戏名称,绘制游戏名称
+        // 作品名（无衬线体，最多两行）
         if (cell.name) {
-          // 副标题使用 alphabetic 基线,配合基于字号的 Y 计算,避免偏下
-          const prevBaseline2 = ctx.textBaseline
+          const nameMaxWidth = cellWidth - config.cellPadding * 4
+          const baseNameSize = config.cellNameFontSize
+          const rawName = cell.name.replace(/\\n/g, "\n")
+          const manualBreak = rawName.indexOf("\n")
+          const hasManualBreak = manualBreak !== -1
+          const nameText = hasManualBreak
+            ? rawName.replace(/\n/g, " ")
+            : rawName
+
+          ctx.fillStyle = "#4b5563"
           ctx.textBaseline = "alphabetic"
-          ctx.fillStyle = "#4b5563" // 灰色文字
-          
-          const maxWidth = cellWidth - CANVAS_CONFIG.cellPadding * 4
-          let gameName = cell.name
-          
-          // 先将文本中的 \\n (两个字符) 替换为真正的换行符 \n
-          gameName = gameName.replace(/\\n/g, '\n')
-          
-          // 检查是否包含\n符，如果有则在第一个\n处强制换行
-          const newlineIndex = gameName.indexOf('\n')
-          let hasManualNewline = false
-          let beforeNewline = ''
-          let afterNewline = ''
-          
-          if (newlineIndex !== -1) {
-            hasManualNewline = true
-            beforeNewline = gameName.substring(0, newlineIndex)
-            afterNewline = gameName.substring(newlineIndex + 1)
-            // 移除后续的所有\n符
-            afterNewline = afterNewline.replace(/\n/g, '')
+          const nameTop =
+            coverY + coverHeight + config.cellTitleMargin + config.cellTitleFontSize + config.cellNameMargin
+
+          let nameSize = Math.floor(baseNameSize)
+          ctx.font = `400 ${nameSize}px ${SANS_FONT}`
+          const fitsOneLine = ctx.measureText(rawName).width <= nameMaxWidth
+
+          if (hasManualBreak || !fitsOneLine) {
+            nameSize = Math.floor(baseNameSize * 0.85)
+            ctx.font = `400 ${nameSize}px ${SANS_FONT}`
           }
-          
-          const textWidth = ctx.measureText(gameName).width
-          
-          // 新的识别逻辑：检测全文是否有连续3个或以上字母且前30个字符出现空格
-          const hasConsecutiveLetters = /[a-zA-Z]{3,}/.test(gameName)
-          const checkPrefix = gameName.substring(0, 30)
-          const hasSpacesInPrefix = checkPrefix.includes(' ')
-          const shouldSplitBySpace = hasConsecutiveLetters && hasSpacesInPrefix
-          
-          // 根据是否两行显示来调整字号
-          let nameFontSize = CANVAS_CONFIG.cellNameFontSize
-          let lineHeight = nameFontSize + 1 // 压缩行间距
-          
-          if (textWidth <= maxWidth && !hasManualNewline) {
-            // 单行显示（无手动换行符）
-            ctx.font = `${nameFontSize}px sans-serif`
-            const firstLineY = coverY +
-              coverHeight +
-              CANVAS_CONFIG.cellTitleMargin +
-              baseCellTitleFont +
-              CANVAS_CONFIG.cellNameMargin + // 保留单行间距
-              nameFontSize
-            ctx.fillText(gameName, x + cellWidth / 2, firstLineY)
-          } else {
-            // 需要两行显示,先缩小字号
-            nameFontSize = Math.floor(CANVAS_CONFIG.cellNameFontSize * 0.85)
-            lineHeight = nameFontSize + 1 // 压缩行间距
-            ctx.font = `${nameFontSize}px sans-serif`
-            
-            let line1 = ''
-            let line2 = ''
-            
-            if (hasManualNewline) {
-              // 如果有手动换行符，直接在\n处分割
-              line1 = beforeNewline
-              line2 = afterNewline
-              
-              // 检查第一行是否溢出
-              if (ctx.measureText(line1).width > maxWidth) {
-                let testLine1 = line1
-                while (ctx.measureText(testLine1).width > maxWidth && testLine1.length > 0) {
-                  testLine1 = testLine1.slice(0, -1)
-                }
-                line1 = testLine1 + '...'
-              }
-              
-              // 检查第二行是否溢出
-              if (ctx.measureText(line2).width > maxWidth) {
-                let testLine2 = line2
-                while (ctx.measureText(testLine2).width > maxWidth && testLine2.length > 0) {
-                  testLine2 = testLine2.slice(0, -1)
-                }
-                line2 = testLine2 + '...'
-              }
-            } else {
-              // 没有手动换行符，按照新规则处理
-              // 缩小字号后重新测量，可能可以放在一行了
-              const newTextWidth = ctx.measureText(gameName).width
-              if (newTextWidth <= maxWidth) {
-                // 缩小后能放在一行，动态调整字号占满空间
-                const optimalFontSize = Math.floor((maxWidth / newTextWidth) * nameFontSize)
-                // 限制字号不超过原始大小
-                const finalFontSize = Math.min(optimalFontSize, CANVAS_CONFIG.cellNameFontSize)
-                ctx.font = `${finalFontSize}px sans-serif`
-                
-                const firstLineY = coverY +
-                  coverHeight +
-                  CANVAS_CONFIG.cellTitleMargin +
-                  baseCellTitleFont +
-                  CANVAS_CONFIG.cellNameMargin +
-                  finalFontSize
-                ctx.fillText(gameName, x + cellWidth / 2, firstLineY)
-                
-                ctx.textBaseline = prevBaseline2
-                return // 直接返回，不需要继续处理
-              }
-              
-              // 缩小后仍需两行
-              if (shouldSplitBySpace) {
-                // 按空格分词
-                const words = gameName.split(' ')
-                
-                for (let i = 0; i < words.length; i++) {
-                  const testLine = line1 + (line1 ? ' ' : '') + words[i]
-                  const testWidth = ctx.measureText(testLine).width
-                  
-                  if (testWidth <= maxWidth) {
-                    line1 = testLine
-                  } else {
-                    line2 = words.slice(i).join(' ')
-                    break
-                  }
-                }
-                
-                // 如果第二行为空(单词太长),按字符截断
-                if (!line2) {
-                  for (let i = 0; i < gameName.length; i++) {
-                    const testLine = gameName.substring(0, i + 1)
-                    if (ctx.measureText(testLine).width > maxWidth) {
-                      line1 = gameName.substring(0, i)
-                      line2 = gameName.substring(i)
-                      break
-                    }
-                  }
-                }
-              } else {
-                // CJK填充：按字符填充满一行
-                for (let i = 0; i < gameName.length; i++) {
-                  const testLine = gameName.substring(0, i + 1)
-                  const testWidth = ctx.measureText(testLine).width
-                  
-                  if (testWidth > maxWidth) {
-                    line1 = gameName.substring(0, i)
-                    line2 = gameName.substring(i)
-                    break
-                  }
-                }
-                
-                // 如果循环结束都没超出,说明全部可以放在第一行
-                if (!line2) {
-                  line1 = gameName
-                }
-              }
-              
-              // 检查第二行是否溢出,如需截断
-              if (line2) {
-                let testLine2 = line2
-                while (ctx.measureText(testLine2).width > maxWidth && testLine2.length > 0) {
-                  testLine2 = testLine2.slice(0, -1)
-                }
-                if (testLine2.length < line2.length) {
-                  line2 = testLine2 + '...'
-                }
-              }
-            }
-            
-            // 计算两行文字的Y坐标(使用缩小后的字号和行高)
-            const firstLineY = coverY +
-              coverHeight +
-              CANVAS_CONFIG.cellTitleMargin +
-              baseCellTitleFont +
-              nameFontSize // 去掉 cellNameMargin
-            
-            // 绘制文字
-            ctx.fillText(line1, x + cellWidth / 2, firstLineY)
-            if (line2) {
-              ctx.fillText(line2, x + cellWidth / 2, firstLineY + lineHeight)
-            }
-          }
-          
-          ctx.textBaseline = prevBaseline2
+
+          const lines = hasManualBreak
+            ? rawName
+                .split("\n")
+                .slice(0, 2)
+                .map((line) => {
+                  if (ctx.measureText(line).width <= nameMaxWidth) return line
+                  return wrapText(ctx, line, nameMaxWidth, 1)[0] ?? ""
+                })
+            : wrapText(ctx, nameText, nameMaxWidth, 2)
+
+          lines.forEach((line, lineIndex) => {
+            if (!line) return
+            const lineY =
+              nameTop +
+              nameSize +
+              lineIndex * (nameSize + 1) -
+              (hasManualBreak || !fitsOneLine ? 4 : 0)
+            ctx.fillText(line, x + cellWidth / 2, lineY)
+          })
+          ctx.textBaseline = "middle"
         }
       })
 
-      // 添加水印
-      ctx.fillStyle = "#9ca3af" // 使用灰色
-      ctx.font = "28px sans-serif" 
+      // 水印：左下作者，右下站点
+      ctx.fillStyle = "#9ca3af"
+      ctx.font = `400 26px ${SANS_FONT}`
+      ctx.textBaseline = "alphabetic"
+      const watermarkY = height - padding / 2
+      ctx.textAlign = "left"
+      ctx.fillText("GitHub@Hisou-Tenshi", padding, watermarkY)
       ctx.textAlign = "right"
-      ctx.fillText(
-        "acgmn-grid.vercel.app",
-        canvas.width - CANVAS_CONFIG.padding,
-        canvas.height - CANVAS_CONFIG.padding / 2
-      )
+      ctx.fillText("acgmn-grid.vercel.app", width - padding, watermarkY)
     } catch (error) {
       logError("绘制Canvas时发生错误:", error)
     }
   }
 
-  // 计算Canvas缩放比例
+  // 计算Canvas缩放比例并同步画布尺寸
   useEffect(() => {
-    if (!isBrowser || !canvasRef.current) return;
+    if (!isBrowser || !canvasRef.current) return
 
     const updateScale = () => {
-      if (!canvasRef.current) return;
+      if (!canvasRef.current) return
 
-      // 始终按容器宽度铺满，保证一屏内完整显示。
-      // 用父容器宽度而不是 window.innerWidth：画布初始 2400px 会把移动端
-      // 布局视口撑大，innerWidth 因此不可靠。
-      const container = canvasRef.current.parentElement;
+      const container = canvasRef.current.parentElement
       const containerWidth = Math.min(
         container?.clientWidth || window.innerWidth,
         1200
-      );
-      const newScale = containerWidth / CANVAS_CONFIG.width;
-      setScale(newScale);
+      )
+      const newScale = containerWidth / config.width
+      setScale(newScale)
 
-      // 更新Canvas尺寸
-      const canvas = canvasRef.current;
-      
-      // 保持Canvas的实际像素数
-      canvas.width = CANVAS_CONFIG.width;
-      canvas.height = CANVAS_CONFIG.height;
-      
-      // 设置显示尺寸
-      canvas.style.width = `${CANVAS_CONFIG.width * newScale}px`;
-      canvas.style.height = `${CANVAS_CONFIG.height * newScale}px`;
-      setCanvasLoaded(true);
+      const canvas = canvasRef.current
+      if (canvas.width !== config.width) canvas.width = config.width
+      if (canvas.height !== config.height) canvas.height = config.height
+      canvas.style.width = `${config.width * newScale}px`
+      canvas.style.height = `${config.height * newScale}px`
+      setCanvasLoaded(true)
 
-      // 使用 requestAnimationFrame 确保在下一帧重绘
       requestAnimationFrame(() => {
-        drawCanvas();
-      });
-    };
+        drawCanvas()
+      })
+    }
 
-    // 初始更新
-    updateScale();
-    
-    // 使用防抖处理窗口大小变化
-    let resizeTimeout: NodeJS.Timeout;
+    updateScale()
+
+    let resizeTimeout: NodeJS.Timeout
     const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateScale, 100);
-    };
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(updateScale, 100)
+    }
 
-    window.addEventListener("resize", handleResize);
-    const container = canvasRef.current.parentElement;
-    const resizeObserver = container ? new ResizeObserver(handleResize) : null;
+    window.addEventListener("resize", handleResize)
+    const container = canvasRef.current.parentElement
+    const resizeObserver = container ? new ResizeObserver(handleResize) : null
     if (container && resizeObserver) {
-      resizeObserver.observe(container);
+      resizeObserver.observe(container)
     }
     return () => {
-      window.removeEventListener("resize", handleResize);
-      resizeObserver?.disconnect();
-      clearTimeout(resizeTimeout);
-    };
-    // drawCanvas 内部依赖均已通过闭包捕获，且每次渲染重建不会改变绘制结果
+      window.removeEventListener("resize", handleResize)
+      resizeObserver?.disconnect()
+      clearTimeout(resizeTimeout)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawCanvas]);
+  }, [config.width, config.height, drawCanvas])
 
   // 当cells变化时重新绘制Canvas
   useEffect(() => {
     if (canvasLoaded && isBrowser) {
       requestAnimationFrame(() => {
-        drawCanvas();
-      });
+        drawCanvas()
+      })
     }
-    // drawCanvas 每次渲染都会重建，加入依赖会导致重绘风暴；cells 等变化已能触发重绘
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cells, canvasLoaded, dragOverCellId, focusCellId]);
+  }, [cells, canvasLoaded, dragOverCellId, focusCellId, globalConfig, config])
 
   // 加载图片
   useEffect(() => {
-    if (!isBrowser) return;
+    if (!isBrowser) return
 
     cells.forEach((cell, index) => {
       if (cell.image && !cell.imageObj) {
         try {
-          const imageSrc = getSelectImageSources(cell.image)[0];
-          if (!imageSrc) return;
+          const imageSrc = getSelectImageSources(cell.image)[0]
+          if (!imageSrc) return
 
-          // 使用全局 window.Image 构造函数而不是直接使用 Image
-          const img = new window.Image();
-          img.crossOrigin = "anonymous";
+          const img = new window.Image()
+          img.crossOrigin = "anonymous"
           img.onerror = (err) => {
-            logError(`图片加载失败: ${imageSrc}`, err);
-          };
+            logError(`图片加载失败: ${imageSrc}`, err)
+          }
           img.onload = () => {
             setCells((prev) => {
-              const newCells = [...prev];
-              newCells[index] = { ...newCells[index], imageObj: img };
-              return newCells;
-            });
-          };
-          img.src = imageSrc;
+              const newCells = [...prev]
+              newCells[index] = { ...newCells[index], imageObj: img }
+              return newCells
+            })
+          }
+          img.src = imageSrc
         } catch (error) {
-          logError("创建图片对象失败:", error);
+          logError("创建图片对象失败:", error)
         }
       }
-    });
-  }, [cells, setCells]);
+    })
+  }, [cells, setCells])
 
-  // 内部函数：绘制占位符
+  // 绘制占位图标（Bilibili 小电视）
   function drawPlaceholder(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -465,69 +406,28 @@ export function useCanvasRenderer({
     width: number,
     height: number
   ) {
-    ctx.fillStyle = "#f3f4f6"; // 淡灰色背景
-    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = "#f3f4f6"
+    ctx.fillRect(x, y, width, height)
 
-    // 绘制游戏手柄图标
-    const iconSize = Math.min(width, height) * 0.4;
-    const iconX = x + (width - iconSize) / 2;
-    const iconY = y + (height - iconSize) / 2;
+    const iconSize = Math.min(width, height) * 0.36
+    const iconX = x + (width - iconSize) / 2
+    const iconY = y + (height - iconSize) / 2
 
-    // 绘制游戏手柄图标
-    ctx.fillStyle = "#9ca3af";
-    ctx.strokeStyle = "#9ca3af";
-    ctx.lineWidth = 6; 
-    gamepadIconPath(iconX, iconY, iconSize).forEach((cmd) => {
-      if (cmd.cmd === "beginPath") {
-        ctx.beginPath();
-      } else if (cmd.cmd === "roundRect" && cmd.args && typeof ctx.roundRect === 'function') {
-        ctx.roundRect(
-          cmd.args[0] as number,
-          cmd.args[1] as number,
-          cmd.args[2] as number,
-          cmd.args[3] as number,
-          cmd.args[4] as number
-        );
-      } else if (cmd.cmd === "arc" && cmd.args) {
-        ctx.arc(
-          cmd.args[0] as number,
-          cmd.args[1] as number,
-          cmd.args[2] as number,
-          cmd.args[3] as number,
-          cmd.args[4] as number
-        );
-      } else if (cmd.cmd === "moveTo" && cmd.args) {
-        ctx.moveTo(
-          cmd.args[0] as number,
-          cmd.args[1] as number
-        );
-      } else if (cmd.cmd === "lineTo" && cmd.args) {
-        ctx.lineTo(
-          cmd.args[0] as number,
-          cmd.args[1] as number
-        );
-      } else if (cmd.cmd === "bezierCurveTo" && cmd.args) {
-        ctx.bezierCurveTo(
-          cmd.args[0] as number,
-          cmd.args[1] as number,
-          cmd.args[2] as number,
-          cmd.args[3] as number,
-          cmd.args[4] as number,
-          cmd.args[5] as number
-        );
-      } else if (cmd.cmd === "closePath") {
-        ctx.closePath();
-      } else if (cmd.cmd === "fill") {
-        ctx.fill();
-      } else if (cmd.cmd === "stroke") {
-        ctx.stroke();
-      }
-    });
+    ctx.save()
+    ctx.translate(iconX, iconY)
+    ctx.scale(iconSize / BILIBILI_ICON_VIEWBOX, iconSize / BILIBILI_ICON_VIEWBOX)
+    ctx.fillStyle = "#c3c7ce"
+    try {
+      getIconPaths().forEach((path) => ctx.fill(path))
+    } catch (error) {
+      logError("绘制占位图标失败:", error)
+    }
+    ctx.restore()
   }
 
   return {
     scale,
     canvasLoaded,
-    drawCanvas
+    drawCanvas,
   }
 }

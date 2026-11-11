@@ -35,6 +35,17 @@ const nl = {
   "Meest Om te Bekritiseren",
   "Beste Verhaal",
 ],
+  grid: {
+    size: 'Raster',
+    rows: 'Rijen',
+    cols: 'Kolommen',
+    custom: 'Aangepast',
+    custom_hint: 'Max. 10 × 10',
+    placeholder_title: 'Nog leeg',
+    example: 'Voorbeeld bekijken',
+    clear: 'Vak leegmaken',
+    clear_confirm: 'Dit vak leegmaken?',
+  },
   ui: {
     tip_edit:
       'Tip: Klik op koptitels, cel titels of werknamen om te bewerken; je kunt ook afbeeldingen direct in cellen slepen. Werknamen ondersteunen automatische regelafbreking, of gebruik ＼n voor geforceerde afbreking. Origineel Werk: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const nl = {
     edit_title: 'Titel Bewerken',
     edit_game_name: 'Werknaam Bewerken',
     edit_main_title: 'Hoofdtitel Bewerken',
+    main_title_hint: 'Enter voor een tweede regel; begin met ＼x om er een ondertitel van te maken',
   },
   common: {
     cancel: 'Annuleren',
@@ -109,7 +121,7 @@ const nl = {
     storage_quota: 'Lokale opslag is vol; de afbeelding is niet opgeslagen. Verwijder enkele covers en probeer opnieuw.',
   },
   a11y: {
-    grid_label: 'ACGMN+ voorkeurentabel, 24 vakken. Gebruik de pijltjes om te bewegen en Enter om het actieve vak te bewerken.',
+    grid_label: 'ACGMN+ voorkeurentabel. Gebruik de pijltjes om te bewegen en Enter om het actieve vak te bewerken.',
   },
 };
 

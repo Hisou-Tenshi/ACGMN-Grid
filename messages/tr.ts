@@ -35,6 +35,17 @@ const tr = {
   "En Çok Eleştirmek İstediğim",
   "En İyi Hikâye",
 ],
+  grid: {
+    size: 'Izgara',
+    rows: 'Satır',
+    cols: 'Sütun',
+    custom: 'Özel',
+    custom_hint: 'En fazla 10 × 10',
+    placeholder_title: 'Doldurulacak',
+    example: 'Örneği gör',
+    clear: 'Hücreyi temizle',
+    clear_confirm: 'Bu hücre temizlensin mi?',
+  },
   ui: {
     tip_edit:
       'İpucu: Üst başlıklara, hücre başlıklarına veya eser adlarına tıklayarak düzenleyebilirsiniz; ayrıca resimleri doğrudan hücrelere sürükleyip bırakabilirsiniz. Eser adları otomatik satır sonunu destekler, zorunlu satır sonu için ＼n kullanın. Orijinal Çalışma: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const tr = {
     edit_title: 'Başlığı Düzenle',
     edit_game_name: 'Eser Adını Düzenle',
     edit_main_title: 'Ana Başlığı Düzenle',
+    main_title_hint: 'İkinci satır için Enter\'a basın; ＼x ile başlarsa alt başlık olur',
   },
   common: {
     cancel: 'İptal',
@@ -109,7 +121,7 @@ const tr = {
     storage_quota: 'Yerel depolama dolu; görsel kaydedilemedi. Bazı kapakları silip tekrar deneyin.',
   },
   a11y: {
-    grid_label: 'ACGMN+ tercih tablosu, 24 hücre. Ok tuşlarıyla gezinin, Enter ile etkin hücreyi düzenleyin.',
+    grid_label: 'ACGMN+ tercih tablosu. Ok tuşlarıyla gezinin, Enter ile etkin hücreyi düzenleyin.',
   },
 };
 

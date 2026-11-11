@@ -35,6 +35,17 @@ const pt = {
   "O Que Mais Critico",
   "Melhor História",
 ],
+  grid: {
+    size: 'Grade',
+    rows: 'Linhas',
+    cols: 'Colunas',
+    custom: 'Personalizado',
+    custom_hint: 'Até 10 × 10',
+    placeholder_title: 'A preencher',
+    example: 'Ver exemplo',
+    clear: 'Limpar célula',
+    clear_confirm: 'Limpar esta célula?',
+  },
   ui: {
     tip_edit:
       'Dica: Clique nos títulos superiores, títulos das células ou nomes das obras para editar; você também pode arrastar imagens diretamente para as células. Os nomes das obras suportam quebra de linha automática, ou use ＼n para quebra de linha forçada. Trabalho Original: Github @ SomiaWhiteRing',
@@ -45,6 +56,7 @@ const pt = {
     edit_title: 'Editar Título',
     edit_game_name: 'Editar Nome da Obra',
     edit_main_title: 'Editar Título Principal',
+    main_title_hint: 'Enter para uma segunda linha; comece com ＼x para virar subtítulo',
   },
   common: {
     cancel: 'Cancelar',
@@ -109,7 +121,7 @@ const pt = {
     storage_quota: 'O armazenamento local está cheio; a imagem não foi guardada. Apague algumas capas e tente novamente.',
   },
   a11y: {
-    grid_label: 'Tabela de preferências ACGMN+, 24 células. Use as setas para mover e Enter para editar a célula atual.',
+    grid_label: 'Tabela de preferências ACGMN+. Use as setas para mover e Enter para editar a célula ativa.',
   },
 };
 
