@@ -178,6 +178,22 @@ export function useCanvasRenderer({
         gridCellWidth - config.cellPadding * 2
       const baseNameSize = config.cellNameFontSize
 
+      // 名字是否要换行是全局决定：只要有一格需要两行，
+      // 全表名字一起微缩到 0.85，保证同排字号一致
+      const anyNameNeedsWrap = cells.some((cell) => {
+        if (!cell.name) return false
+        const raw = cell.name.replace(/\\n/g, "\n")
+        if (raw.indexOf("\n") !== -1) return true
+        const text = raw.replace(/\s+/g, " ").trim()
+        if (!text) return false
+        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+        return ctx.measureText(text).width > nameMaxWidthGlobal
+      })
+      const nameSizeGlobal = Math.max(
+        10,
+        Math.floor(baseNameSize * (anyNameNeedsWrap ? 0.85 : 1))
+      )
+
       const countNameLines = (name?: string): number => {
         if (!name) return 0
         const raw = name.replace(/\\n/g, "\n")
@@ -189,7 +205,7 @@ export function useCanvasRenderer({
         }
         const text = raw.replace(/\s+/g, " ").trim()
         if (!text) return 0
-        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+        ctx.font = `400 ${nameSizeGlobal}px ${SANS_FONT}`
         return Math.min(
           2,
           wrapText(ctx, text, nameMaxWidthGlobal, 2).length
@@ -311,16 +327,7 @@ export function useCanvasRenderer({
         // 奖项标题离封面留出固定呼吸位
         const topGap = bandHeight * 0.1
 
-        // 基础字号能一行放下就保持原字号；要换行（手动或自动）
-        // 才整体微缩到 0.85，再自动排两行
-        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
-        const fitsOneLine =
-          ctx.measureText(nameText).width <= nameMaxWidth
-        const needsTwoLines = hasManualBreak || !fitsOneLine
-        const nameSize = Math.max(
-          10,
-          Math.floor(baseNameSize * (needsTwoLines ? 0.85 : 1))
-        )
+        const nameSize = nameSizeGlobal
         const nameInkHeight = nameSize * nameInkFactor
         const nameAscent = nameSize * nameAscentFactor
         const nameLineGap = nameSize * nameLineGapFactor
@@ -357,17 +364,24 @@ export function useCanvasRenderer({
         if (nameLines.length > 0) {
           ctx.fillStyle = "#4b5563"
           ctx.font = `400 ${nameSize}px ${SANS_FONT}`
-          const nameTop = blockTop + titleInkHeight + nameGap
-          const lineOffset =
-            ((fitLines - nameLines.length) *
-              (nameInkHeight + nameLineGap)) /
-            2
+          // 单行与两行共用同一条中线：两行向上下对称展开，
+          // 而不是只对齐第一行
+          const slotHeight =
+            reservedLines * nameInkHeight +
+            (reservedLines - 1) * nameLineGap
+          const drawnHeight =
+            nameLines.length * nameInkHeight +
+            (nameLines.length - 1) * nameLineGap
+          const nameTop =
+            blockTop +
+            titleInkHeight +
+            nameGap +
+            (slotHeight - drawnHeight) / 2
           nameLines.forEach((line, lineIndex) => {
             ctx.fillText(
               line,
               x + cellWidth / 2,
               nameTop +
-                lineOffset +
                 nameAscent +
                 lineIndex * (nameInkHeight + nameLineGap)
             )
