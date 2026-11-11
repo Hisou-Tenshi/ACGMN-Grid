@@ -311,8 +311,16 @@ export function useCanvasRenderer({
         // 奖项标题离封面留出固定呼吸位
         const topGap = bandHeight * 0.1
 
-        // 作品名字号保持与基础配置一致，不为了塞下留白而缩小
-        const nameSize = Math.floor(baseNameSize)
+        // 基础字号能一行放下就保持原字号；要换行（手动或自动）
+        // 才整体微缩到 0.85，再自动排两行
+        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+        const fitsOneLine =
+          ctx.measureText(nameText).width <= nameMaxWidth
+        const needsTwoLines = hasManualBreak || !fitsOneLine
+        const nameSize = Math.max(
+          10,
+          Math.floor(baseNameSize * (needsTwoLines ? 0.85 : 1))
+        )
         const nameInkHeight = nameSize * nameInkFactor
         const nameAscent = nameSize * nameAscentFactor
         const nameLineGap = nameSize * nameLineGapFactor
