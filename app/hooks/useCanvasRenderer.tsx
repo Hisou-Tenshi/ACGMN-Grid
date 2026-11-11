@@ -306,28 +306,13 @@ export function useCanvasRenderer({
 
         const nameInkFactor = 0.95
         const nameAscentFactor = 0.8
-        const nameLineGapFactor = 0.2
-        const nameGapFactor = 0.85
-        // 奖项标题离封面留出固定呼吸位，名字组随后收紧
-        const topGap = bandHeight * 0.12
-        const bottomGap = bandHeight * 0.08
+        const nameLineGapFactor = 0.18
+        const nameGapFactor = 0.55
+        // 奖项标题离封面留出固定呼吸位
+        const topGap = bandHeight * 0.1
 
-        let nameSize = baseNameSize
-        if (reservedLines > 0) {
-          const budget =
-            bandHeight - topGap - bottomGap - titleInkHeight
-          const denominator =
-            reservedLines * (nameInkFactor + nameLineGapFactor) -
-            nameLineGapFactor +
-            nameGapFactor
-          nameSize = Math.max(
-            10,
-            Math.min(
-              baseNameSize,
-              Math.floor(budget / denominator)
-            )
-          )
-        }
+        // 作品名字号保持与基础配置一致，不为了塞下留白而缩小
+        const nameSize = Math.floor(baseNameSize)
         const nameInkHeight = nameSize * nameInkFactor
         const nameAscent = nameSize * nameAscentFactor
         const nameLineGap = nameSize * nameLineGapFactor
