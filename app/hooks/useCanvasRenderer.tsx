@@ -366,17 +366,13 @@ export function useCanvasRenderer({
           ctx.font = `400 ${nameSize}px ${SANS_FONT}`
           // 单行与两行共用同一条中线：两行向上下对称展开，
           // 而不是只对齐第一行
-          const slotHeight =
-            reservedLines * nameInkHeight +
-            (reservedLines - 1) * nameLineGap
+          // 中线 = 奖项文字最低点 与 单元格内底边 的中点
+          const nameCenter =
+            (blockTop + titleInkHeight + innerBottom) / 2
           const drawnHeight =
             nameLines.length * nameInkHeight +
             (nameLines.length - 1) * nameLineGap
-          const nameTop =
-            blockTop +
-            titleInkHeight +
-            nameGap +
-            (slotHeight - drawnHeight) / 2
+          const nameTop = nameCenter - drawnHeight / 2
           nameLines.forEach((line, lineIndex) => {
             ctx.fillText(
               line,
