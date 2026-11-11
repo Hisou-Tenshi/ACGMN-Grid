@@ -177,21 +177,11 @@ export function useCanvasRenderer({
       const nameMaxWidthGlobal =
         gridCellWidth - config.cellPadding * 2
       const baseNameSize = config.cellNameFontSize
-
-      // 名字是否要换行是全局决定：只要有一格需要两行，
-      // 全表名字一起微缩到 0.85，保证同排字号一致
-      const anyNameNeedsWrap = cells.some((cell) => {
-        if (!cell.name) return false
-        const raw = cell.name.replace(/\\n/g, "\n")
-        if (raw.indexOf("\n") !== -1) return true
-        const text = raw.replace(/\s+/g, " ").trim()
-        if (!text) return false
-        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
-        return ctx.measureText(text).width > nameMaxWidthGlobal
-      })
-      const nameSizeGlobal = Math.max(
+      // 短名字可以略放大；需要换行的名字用略小字号
+      const maxNameSize = Math.round(baseNameSize * 1.25)
+      const wrappedNameSize = Math.max(
         10,
-        Math.floor(baseNameSize * (anyNameNeedsWrap ? 0.85 : 1))
+        Math.floor(baseNameSize * 0.85)
       )
 
       const countNameLines = (name?: string): number => {
@@ -205,11 +195,8 @@ export function useCanvasRenderer({
         }
         const text = raw.replace(/\s+/g, " ").trim()
         if (!text) return 0
-        ctx.font = `400 ${nameSizeGlobal}px ${SANS_FONT}`
-        return Math.min(
-          2,
-          wrapText(ctx, text, nameMaxWidthGlobal, 2).length
-        )
+        ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+        return ctx.measureText(text).width > nameMaxWidthGlobal ? 2 : 1
       }
 
       const reservedLines = hasAnyName
@@ -323,30 +310,35 @@ export function useCanvasRenderer({
         const nameInkFactor = 0.95
         const nameAscentFactor = 0.8
         const nameLineGapFactor = 0.18
-        const nameGapFactor = 0.55
         // 奖项标题离封面留出固定呼吸位
         const topGap = bandHeight * 0.1
 
-        const nameSize = nameSizeGlobal
-        const nameInkHeight = nameSize * nameInkFactor
-        const nameAscent = nameSize * nameAscentFactor
-        const nameLineGap = nameSize * nameLineGapFactor
-        const nameGap = nameSize * nameGapFactor
-
-        // 小格子放不下预留行时逐行退让，绝不让名字压到奖项标题
-        let fitLines = reservedLines
-        while (fitLines > 0) {
-          const needed =
-            topGap +
-            titleInkHeight +
-            nameGap +
-            fitLines * nameInkHeight +
-            (fitLines - 1) * nameLineGap
-          if (needed <= bandHeight) break
-          fitLines--
+        // 短名字放大到刚好占满一行，长名字缩回基础字号，
+        // 再放不下才换行并继续用略小字号
+        let nameSize = baseNameSize
+        let nameLines: string[] = []
+        if (rawName) {
+          if (hasManualBreak) {
+            nameSize = wrappedNameSize
+            nameLines = layoutName(nameSize, 2)
+          } else {
+            ctx.font = `400 ${baseNameSize}px ${SANS_FONT}`
+            const singleWidth = ctx.measureText(nameText).width
+            if (singleWidth <= nameMaxWidth) {
+              nameSize = Math.max(
+                baseNameSize,
+                Math.min(
+                  maxNameSize,
+                  Math.floor((baseNameSize * nameMaxWidth) / singleWidth)
+                )
+              )
+              nameLines = [nameText]
+            } else {
+              nameSize = wrappedNameSize
+              nameLines = layoutName(nameSize, 2)
+            }
+          }
         }
-        const nameLines =
-          fitLines > 0 ? layoutName(nameSize, fitLines) : []
 
         const blockTop =
           reservedLines > 0
@@ -361,9 +353,37 @@ export function useCanvasRenderer({
           blockTop + titleAscent
         )
 
+        // 空间不够时先减少行数，再逐步缩小字号，绝不让名字压到奖项
+        const availableHeight = innerBottom - blockTop - titleInkHeight
+        const blockHeightOf = (lines: number, size: number) =>
+          lines * size * nameInkFactor +
+          (lines - 1) * size * nameLineGapFactor
+        // 至少留出奖项与名字之间的呼吸位；放不下先缩字号，
+        // 仍放不下才少画一行
+        const minNameGap = titleSize * 0.25
+        let guard = 0
+        while (
+          nameLines.length > 0 &&
+          blockHeightOf(nameLines.length, nameSize) + minNameGap >
+            availableHeight &&
+          guard++ < 80
+        ) {
+          if (nameSize > 10) {
+            nameSize -= 1
+            nameLines = layoutName(nameSize, nameLines.length)
+          } else if (nameLines.length > 1) {
+            nameLines = layoutName(nameSize, 1)
+          } else {
+            break
+          }
+        }
+
         if (nameLines.length > 0) {
           ctx.fillStyle = "#4b5563"
           ctx.font = `400 ${nameSize}px ${SANS_FONT}`
+          const nameInkHeight = nameSize * nameInkFactor
+          const nameAscent = nameSize * nameAscentFactor
+          const nameLineGap = nameSize * nameLineGapFactor
           // 单行与两行共用同一条中线：两行向上下对称展开，
           // 而不是只对齐第一行
           // 中线 = 奖项文字最低点 与 单元格内底边 的中点
